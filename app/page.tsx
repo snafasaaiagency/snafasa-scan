@@ -124,7 +124,7 @@ export default function LandingPage() {
       <section className="hero-gradient min-h-[100dvh] flex flex-col items-center justify-center text-center px-4 pt-32 pb-20">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium mb-6 animate-fade-in"
           style={{ background: "var(--color-primary-100)", color: "var(--color-primary-700)", border: "1px solid var(--color-primary-200)" }}>
-          <Image src="/logo.svg" alt={`${APP_NAME} logo`} width={20} height={20} />
+          <Image src="/logo.png" alt={`${APP_NAME} logo`} width={22} height={22} className="rounded-lg" />
           Images processed 100% in your browser — never uploaded
         </div>
 

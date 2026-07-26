@@ -37,10 +37,11 @@ export default function Footer() {
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2.5 font-bold text-lg mb-3">
               <Image
-                src="/logo.svg"
+                src="/logo.png"
                 alt={`${APP_NAME} logo`}
-                width={30}
-                height={30}
+                width={34}
+                height={34}
+                className="rounded-xl shadow-md border border-white/10"
               />
               <span style={{ color: "var(--color-text-primary)", fontFamily: "Space Grotesk, sans-serif" }}>
                 {APP_NAME}
