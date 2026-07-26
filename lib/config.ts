@@ -13,18 +13,47 @@ export const PAYONEER_LINK =
 
 export const CONTACT_EMAIL = "snafasaaiagency@gmail.com";
 
-// ── Plan IDs ────────────────────────────────────────────────────
+// Free trial threshold for unauthenticated users before prompting sign-up
+export const FREE_TRIAL_CONVERSIONS = 3;
+
+// Language options
+export interface LanguageOption {
+  code: string; // Tesseract 3-letter code
+  label: string; // Display name
+  native: string;
+}
+
+export const FREE_LANGUAGES: LanguageOption[] = [
+  { code: "eng", label: "English", native: "English" },
+  { code: "spa", label: "Spanish", native: "Español" },
+  { code: "fra", label: "French", native: "Français" },
+  { code: "deu", label: "German", native: "Deutsch" },
+  { code: "ara", label: "Arabic", native: "العربية" },
+];
+
+export const PREMIUM_LANGUAGES: LanguageOption[] = [
+  ...FREE_LANGUAGES,
+  { code: "zho", label: "Chinese (Simplified)", native: "中文" },
+  { code: "hin", label: "Hindi", native: "हिन्दी" },
+  { code: "jpn", label: "Japanese", native: "日本語" },
+  { code: "rus", label: "Russian", native: "Русский" },
+  { code: "por", label: "Portuguese", native: "Português" },
+  { code: "ita", label: "Italian", native: "Italiano" },
+  { code: "nld", label: "Dutch", native: "Nederlands" },
+  { code: "pol", label: "Polish", native: "Polski" },
+  { code: "tur", label: "Turkish", native: "Türkçe" },
+  { code: "kor", label: "Korean", native: "한국어" },
+  { code: "swe", label: "Swedish", native: "Svenska" },
+  { code: "ind", label: "Indonesian", native: "Bahasa Indonesia" },
+  { code: "ukr", label: "Ukrainian", native: "Українська" },
+  { code: "ces", label: "Czech", native: "Čeština" },
+  { code: "ron", label: "Romanian", native: "Română" },
+];
+
 export type PlanId = "free" | "tier1" | "tier2" | "tier3" | "tier4";
 export type UserRole = "user" | "admin";
+export type PaymentStatus = "awaiting_payment" | "submitted" | "approved" | "rejected";
 
-// ── Payment status ───────────────────────────────────────────────
-export type PaymentStatus =
-  | "awaiting_payment"
-  | "submitted"
-  | "approved"
-  | "rejected";
-
-// ── Tier definitions ─────────────────────────────────────────────
 export interface TierDef {
   id: PlanId;
   name: string;
@@ -42,6 +71,7 @@ export interface TierDef {
   highlighted?: boolean;
 }
 
+// Payoneer Payment Link Minimum Threshold Compliant Pricing Tiers (Minimum $20 USD)
 export const TIERS: TierDef[] = [
   {
     id: "free",
@@ -60,13 +90,13 @@ export const TIERS: TierDef[] = [
   {
     id: "tier1",
     name: "Starter",
-    priceUsd: 4,
-    priceLabel: "$4 one-time",
-    description: "For users who need higher file limits & clean exports.",
-    maxImagesPerConversion: 3,
-    maxFileSizeMb: 15,
+    priceUsd: 20,
+    priceLabel: "$20 one-time",
+    description: "For users needing higher file limits & CSV exports.",
+    maxImagesPerConversion: 10,
+    maxFileSizeMb: 25,
     languages: "20+",
-    exportFormats: ["TXT", "DOCX", "PDF"],
+    exportFormats: ["TXT", "DOCX", "PDF", "CSV"],
     cloudHistory: false,
     advancedEnhance: true,
     prioritySupport: false,
@@ -74,11 +104,11 @@ export const TIERS: TierDef[] = [
   {
     id: "tier2",
     name: "Standard",
-    priceUsd: 9,
-    priceLabel: "$9 one-time",
-    description: "Most popular for students & professionals.",
-    maxImagesPerConversion: 10,
-    maxFileSizeMb: 25,
+    priceUsd: 35,
+    priceLabel: "$35 one-time",
+    description: "Most popular for students & working professionals.",
+    maxImagesPerConversion: 25,
+    maxFileSizeMb: 50,
     languages: "20+",
     exportFormats: ["TXT", "DOCX", "PDF", "CSV"],
     cloudHistory: true,
@@ -90,13 +120,13 @@ export const TIERS: TierDef[] = [
   {
     id: "tier3",
     name: "Pro",
-    priceUsd: 19,
-    priceLabel: "$19 one-time",
+    priceUsd: 50,
+    priceLabel: "$50 one-time",
     description: "For power users processing multi-page documents.",
-    maxImagesPerConversion: 25,
-    maxFileSizeMb: 50,
+    maxImagesPerConversion: 50,
+    maxFileSizeMb: 100,
     languages: "20+",
-    exportFormats: ["TXT", "DOCX", "PDF", "CSV"],
+    exportFormats: ["TXT", "DOCX", "PDF", "CSV", "ZIP"],
     cloudHistory: true,
     advancedEnhance: true,
     prioritySupport: true,
@@ -104,56 +134,19 @@ export const TIERS: TierDef[] = [
   {
     id: "tier4",
     name: "Business",
-    priceUsd: 39,
-    priceLabel: "$39 one-time",
+    priceUsd: 99,
+    priceLabel: "$99 one-time",
     description: "Unlimited batch conversion for agency workflow.",
     maxImagesPerConversion: "unlimited",
-    maxFileSizeMb: 100,
+    maxFileSizeMb: 250,
     languages: "20+",
-    exportFormats: ["TXT", "DOCX", "PDF", "CSV"],
+    exportFormats: ["TXT", "DOCX", "PDF", "CSV", "ZIP"],
     cloudHistory: true,
     advancedEnhance: true,
     prioritySupport: true,
-    badge: "Unlimited",
   },
 ];
 
 export function getTierDef(planId: PlanId): TierDef {
   return TIERS.find((t) => t.id === planId) ?? TIERS[0];
 }
-
-// ── Free trial limit ─────────────────────────────────────────────
-export const FREE_TRIAL_CONVERSIONS = 3;
-
-// ── OCR Supported Languages ─────────────────────────────────────
-export interface LanguageOption {
-  code: string;
-  label: string;
-}
-
-export const FREE_LANGUAGES: LanguageOption[] = [
-  { code: "eng", label: "English" },
-  { code: "spa", label: "Spanish" },
-  { code: "fra", label: "French" },
-  { code: "deu", label: "German" },
-  { code: "por", label: "Portuguese" },
-];
-
-export const PREMIUM_LANGUAGES: LanguageOption[] = [
-  ...FREE_LANGUAGES,
-  { code: "ara", label: "Arabic" },
-  { code: "chi_sim", label: "Chinese (Simplified)" },
-  { code: "chi_tra", label: "Chinese (Traditional)" },
-  { code: "hin", label: "Hindi" },
-  { code: "ita", label: "Italian" },
-  { code: "jpn", label: "Japanese" },
-  { code: "kor", label: "Korean" },
-  { code: "nld", label: "Dutch" },
-  { code: "pol", label: "Polish" },
-  { code: "rus", label: "Russian" },
-  { code: "tur", label: "Turkish" },
-  { code: "ukr", label: "Ukrainian" },
-  { code: "vie", label: "Vietnamese" },
-  { code: "swe", label: "Swedish" },
-  { code: "ron", label: "Romanian" },
-];
