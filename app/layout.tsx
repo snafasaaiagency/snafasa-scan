@@ -30,14 +30,6 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Snafasa AI Agency" }],
   creator: "Snafasa AI Agency",
-  icons: {
-    icon: [
-      { url: "/icon.png", type: "image/png" },
-      { url: "/favicon.ico" },
-    ],
-    shortcut: "/icon.png",
-    apple: "/icon.png",
-  },
   openGraph: {
     type: "website",
     locale: "en_US",
