@@ -21,7 +21,7 @@ export default function Icon() {
           position: "relative",
         }}
       >
-        {/* Top-Left Corner Bracket */}
+        {/* Top-Left Bracket */}
         <div
           style={{
             position: "absolute",
@@ -29,12 +29,12 @@ export default function Icon() {
             left: 2,
             width: 7,
             height: 7,
-            borderTop: "2.5px solid #38bdf8",
-            borderLeft: "2.5px solid #38bdf8",
+            borderTop: "2.5px solid #00d8f6",
+            borderLeft: "2.5px solid #00d8f6",
             borderTopLeftRadius: "2px",
           }}
         />
-        {/* Top-Right Corner Bracket */}
+        {/* Top-Right Bracket */}
         <div
           style={{
             position: "absolute",
@@ -42,12 +42,25 @@ export default function Icon() {
             right: 2,
             width: 7,
             height: 7,
-            borderTop: "2.5px solid #38bdf8",
-            borderRight: "2.5px solid #38bdf8",
+            borderTop: "2.5px solid #00d8f6",
+            borderRight: "2.5px solid #00d8f6",
             borderTopRightRadius: "2px",
           }}
         />
-        {/* Bottom-Left Corner Bracket */}
+        {/* Bottom-Right Bracket */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 2,
+            right: 2,
+            width: 7,
+            height: 7,
+            borderBottom: "2.5px solid #0284c7",
+            borderRight: "2.5px solid #0284c7",
+            borderBottomRightRadius: "2px",
+          }}
+        />
+        {/* Bottom-Left Bracket */}
         <div
           style={{
             position: "absolute",
@@ -55,39 +68,26 @@ export default function Icon() {
             left: 2,
             width: 7,
             height: 7,
-            borderBottom: "2.5px solid #38bdf8",
-            borderLeft: "2.5px solid #38bdf8",
+            borderBottom: "2.5px solid #0284c7",
+            borderLeft: "2.5px solid #0284c7",
             borderBottomLeftRadius: "2px",
           }}
         />
 
-        {/* Center Bold Blue "T" */}
+        {/* Center Stylized "S" Signature Mark */}
         <div
           style={{
             fontSize: "22px",
             fontWeight: 900,
+            background: "linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #7c3aed 100%)",
+            WebkitBackgroundClip: "text",
             color: "#0284c7",
             fontFamily: "sans-serif",
-            marginTop: "-3px",
-            marginLeft: "2px",
+            marginTop: "-2px",
           }}
         >
-          T
+          S
         </div>
-
-        {/* Bottom Swoosh Circle */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 2,
-            right: 3,
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            border: "2px solid #0284c7",
-            borderTopColor: "transparent",
-          }}
-        />
       </div>
     ),
     {
