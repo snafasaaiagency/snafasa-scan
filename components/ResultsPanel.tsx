@@ -12,6 +12,8 @@ import {
   RefreshCw,
   ChevronDown,
   Zap,
+  AlignLeft,
+  Grid,
 } from "lucide-react";
 import { cn, copyToClipboard, downloadTextFile, exportAsDocx, exportAsPdf, exportAsCsv, timestampedFilename, formatMs } from "@/lib/utils";
 import type { OcrResult } from "@/lib/ocr";
@@ -25,26 +27,54 @@ interface ResultsPanelProps {
   onReset: () => void;
 }
 
+type ViewMode = "formatted" | "table" | "raw";
+
 export default function ResultsPanel({ result, fileName, plan, onReset }: ResultsPanelProps) {
   const [copied, setCopied] = useState(false);
-  const [editableText, setEditableText] = useState(result.text);
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    result.tableData.isTable ? "table" : "formatted"
+  );
+  const [editableText, setEditableText] = useState(result.formattedText || result.text);
+  const [tableRows, setTableRows] = useState<string[][]>(result.tableData.rows || []);
   const [exportOpen, setExportOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const tier = getTierDef(plan);
   const baseName = timestampedFilename(fileName ? fileName.replace(/\.[^.]+$/, "") : "snafasascan_result");
 
   const handleCopy = useCallback(async () => {
-    const ok = await copyToClipboard(editableText);
+    let textToCopy = editableText;
+    if (viewMode === "table" && result.tableData.isTable) {
+      textToCopy = result.tableData.csvText;
+    }
+    const ok = await copyToClipboard(textToCopy);
     if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [editableText]);
+  }, [editableText, viewMode, result.tableData]);
 
   const handleDownloadTxt = () => downloadTextFile(editableText, `${baseName}.txt`);
   const handleDownloadDocx = () => exportAsDocx(editableText, baseName);
   const handleDownloadPdf = () => exportAsPdf(editableText, baseName);
-  const handleDownloadCsv = () => exportAsCsv(editableText, baseName);
+  const handleDownloadCsv = () => {
+    if (result.tableData.isTable && result.tableData.csvText) {
+      downloadTextFile(result.tableData.csvText, `${baseName}.csv`);
+    } else {
+      exportAsCsv(editableText, baseName);
+    }
+  };
+
+  const handleTableCellChange = (rIdx: number, cIdx: number, val: string) => {
+    const updated = tableRows.map((row, r) =>
+      r === rIdx ? row.map((cell, c) => (c === cIdx ? val : cell)) : row
+    );
+    setTableRows(updated);
+    // Update editable CSV text as well
+    const updatedCsv = updated
+      .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    setEditableText(updatedCsv);
+  };
 
   const wordCount = editableText.trim() ? editableText.trim().split(/\s+/).length : 0;
   const charCount = editableText.length;
@@ -53,7 +83,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
     <div className="card animate-fade-in overflow-hidden">
       {/* Header */}
       <div
-        className="flex items-center justify-between px-5 py-4 border-b"
+        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-5 py-4 border-b"
         style={{ borderColor: "var(--color-border)", background: "var(--color-surface-2)" }}
       >
         <div className="flex items-center gap-3">
@@ -65,7 +95,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
           </div>
           <div>
             <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              Text extracted successfully
+              {result.tableData.isTable ? "Table & Layout Extracted" : "Text Extracted Successfully"}
             </p>
             <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
               {wordCount} words · {charCount} characters
@@ -87,20 +117,120 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
         </div>
       </div>
 
-      {/* Editable text area */}
-      <div className="relative p-5">
-        <textarea
-          ref={textareaRef}
-          value={editableText}
-          onChange={(e) => setEditableText(e.target.value)}
-          className="textarea font-mono text-sm min-h-64"
-          spellCheck={false}
-          aria-label="Extracted text — editable"
-          style={{ background: "var(--color-surface-2)", fontFamily: "ui-monospace, monospace" }}
-        />
-        <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
-          ✏️ Text is editable — make corrections before exporting.
-        </p>
+      {/* View Mode Tabs (Formatted Layout vs Interactive Table Grid vs Raw) */}
+      <div
+        className="flex items-center gap-2 px-5 py-2.5 border-b text-xs font-medium"
+        style={{ borderColor: "var(--color-border)", background: "var(--color-surface-1)" }}
+      >
+        <span style={{ color: "var(--color-text-muted)" }} className="mr-2 hidden sm:inline">
+          View Mode:
+        </span>
+
+        {result.tableData.isTable && (
+          <button
+            onClick={() => setViewMode("table")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
+              viewMode === "table"
+                ? "bg-primary-500 text-white font-bold shadow-sm"
+                : "btn-ghost text-secondary"
+            )}
+          >
+            <Grid className="h-3.5 w-3.5" />
+            Table View ({tableRows.length} rows)
+          </button>
+        )}
+
+        <button
+          onClick={() => { setViewMode("formatted"); setEditableText(result.formattedText || result.text); }}
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
+            viewMode === "formatted"
+              ? "bg-primary-500 text-white font-bold shadow-sm"
+              : "btn-ghost text-secondary"
+          )}
+        >
+          <AlignLeft className="h-3.5 w-3.5" />
+          Formatted Layout
+        </button>
+
+        <button
+          onClick={() => { setViewMode("raw"); setEditableText(result.text); }}
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
+            viewMode === "raw"
+              ? "bg-primary-500 text-white font-bold shadow-sm"
+              : "btn-ghost text-secondary"
+          )}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          Plain Unformatted
+        </button>
+      </div>
+
+      {/* Content View Area */}
+      <div className="p-5">
+        {viewMode === "table" && tableRows.length > 0 ? (
+          <div className="overflow-x-auto max-h-[500px] border rounded-xl" style={{ borderColor: "var(--color-border)" }}>
+            <table className="w-full text-left text-xs border-collapse font-mono" style={{ background: "var(--color-surface-2)" }}>
+              <thead>
+                <tr className="border-b" style={{ borderColor: "var(--color-border)", background: "var(--color-surface-3)" }}>
+                  {tableRows[0]?.map((_, cIdx) => (
+                    <th key={cIdx} className="p-3 font-bold border-r uppercase tracking-wider" style={{ borderColor: "var(--color-border)", color: "var(--color-primary-500)" }}>
+                      Col {cIdx + 1}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {tableRows.map((row, rIdx) => (
+                  <tr
+                    key={rIdx}
+                    className="border-b hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                    style={{ borderColor: "var(--color-border)" }}
+                  >
+                    {row.map((cell, cIdx) => (
+                      <td key={cIdx} className="p-2 border-r min-w-[120px]" style={{ borderColor: "var(--color-border)" }}>
+                        <input
+                          type="text"
+                          value={cell}
+                          onChange={(e) => handleTableCellChange(rIdx, cIdx, e.target.value)}
+                          className="w-full bg-transparent border-none outline-none text-xs p-1 focus:ring-1 focus:ring-primary-500 rounded"
+                          style={{ color: "var(--color-text-primary)" }}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="relative">
+            <textarea
+              ref={textareaRef}
+              value={editableText}
+              onChange={(e) => setEditableText(e.target.value)}
+              className="textarea font-mono text-sm min-h-72 leading-relaxed"
+              spellCheck={false}
+              aria-label="Extracted text — editable"
+              style={{
+                background: "var(--color-surface-2)",
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                whiteSpace: "pre",
+              }}
+            />
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <p>✏️ Click any text or table cell to edit before exporting.</p>
+          {result.tableData.isTable && (
+            <p className="font-semibold" style={{ color: "var(--color-success)" }}>
+              📊 Table layout detected & structured automatically!
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Action bar */}
@@ -116,7 +246,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
           {copied ? (
             <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</>
           ) : (
-            <><Copy className="h-3.5 w-3.5" /> Copy text</>
+            <><Copy className="h-3.5 w-3.5" /> {viewMode === "table" ? "Copy CSV Table" : "Copy Text"}</>
           )}
         </button>
 
@@ -125,10 +255,15 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
           <Download className="h-3.5 w-3.5" /> .txt
         </button>
 
+        {/* Download CSV */}
+        <button onClick={handleDownloadCsv} className="btn btn-outline btn-sm">
+          <Table2 className="h-3.5 w-3.5" style={{ color: "var(--color-success)" }} />
+          .csv (Excel)
+        </button>
+
         {/* Export dropdown (premium) */}
         {(tier.exportFormats.includes(".docx") ||
-          tier.exportFormats.includes(".pdf") ||
-          tier.exportFormats.includes(".csv")) && (
+          tier.exportFormats.includes(".pdf")) && (
           <div className="relative">
             <button
               onClick={() => setExportOpen(!exportOpen)}
@@ -160,15 +295,6 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
                   >
                     <FileText className="h-4 w-4" style={{ color: "hsl(0,80%,50%)" }} />
                     PDF (.pdf)
-                  </button>
-                )}
-                {tier.exportFormats.includes(".csv") && (
-                  <button
-                    onClick={() => { handleDownloadCsv(); setExportOpen(false); }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm w-full text-left btn-ghost"
-                  >
-                    <Table2 className="h-4 w-4" style={{ color: "var(--color-success)" }} />
-                    CSV (.csv)
                   </button>
                 )}
                 {tier.exportFormats.includes(".zip") && (
