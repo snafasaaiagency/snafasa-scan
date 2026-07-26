@@ -1,7 +1,7 @@
-// lib/ocr.ts — Ultra-fast GPU-accelerated Tesseract.js wrapper + Layout/Table Engine
+// lib/ocr.ts — Ultra-fast GPU-accelerated Tesseract.js wrapper + Table & Layout Engine
 // ALL image processing runs client-side inside the browser. Zero image bytes leave the device.
 
-import type { Worker } from "tesseract.js";
+import { PSM, type Worker } from "tesseract.js";
 
 let tesseractWorker: Worker | null = null;
 let workerLanguage = "";
@@ -38,6 +38,11 @@ export async function getWorker(
     corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js",
   });
 
+  // Set Page Segmentation Mode to SINGLE_BLOCK (Assume a single uniform block of text / structured table)
+  await worker.setParameters({
+    tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
+  });
+
   tesseractWorker = worker;
   workerLanguage = language;
   return worker;
@@ -58,14 +63,15 @@ export interface ProcessOptions {
 }
 
 /**
- * GPU-accelerated hardware pre-processing using Canvas filters.
- * Prepares image for crisp OCR recognition.
+ * GPU-accelerated canvas pre-processing pipeline.
+ * Upscales small document images and applies optimal contrast binarization
+ * for maximum character and table cell accuracy.
  */
 export async function preprocessImage(
   file: File,
   options: ProcessOptions = {}
 ): Promise<Blob> {
-  const { grayscale = true, contrast = 125, advancedEnhance = false } = options;
+  const { grayscale = true, contrast = 140, advancedEnhance = false } = options;
 
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -73,10 +79,11 @@ export async function preprocessImage(
 
     img.onload = () => {
       try {
+        // Upscale images under 1600px width for sharp OCR character definition
         let targetW = img.width;
         let targetH = img.height;
-        if (img.width < 1200) {
-          const scale = advancedEnhance ? 2 : 1.5;
+        if (img.width < 1600) {
+          const scale = advancedEnhance ? 2.5 : 2.0;
           targetW = Math.round(img.width * scale);
           targetH = Math.round(img.height * scale);
         }
@@ -92,15 +99,16 @@ export async function preprocessImage(
           return;
         }
 
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+
+        // GPU contrast & binarization filters
         const filters: string[] = [];
         if (grayscale) filters.push("grayscale(100%)");
         if (contrast !== 100) filters.push(`contrast(${contrast}%)`);
-        if (advancedEnhance) filters.push("brightness(105%)");
+        filters.push("brightness(102%)");
 
-        if (filters.length > 0) {
-          ctx.filter = filters.join(" ");
-        }
-
+        ctx.filter = filters.join(" ");
         ctx.drawImage(img, 0, 0, targetW, targetH);
 
         URL.revokeObjectURL(url);
@@ -149,12 +157,6 @@ interface WordBox {
   y1: number;
 }
 
-/**
- * Spatial Layout & Table Reconstruction Engine
- * Analyzes word positions (x, y bounding boxes) to reconstruct table columns,
- * aligned rows, CSV output, and formatted text exactly matching the image layout.
- */
-
 interface RawWord {
   text: string;
   bbox: { x0: number; y0: number; x1: number; y1: number };
@@ -169,6 +171,11 @@ interface RawData {
   lines?: RawLine[];
 }
 
+/**
+ * Spatial Layout & Table Reconstruction Engine
+ * Analyzes word positions (x, y bounding boxes) to reconstruct table columns,
+ * aligned rows, CSV output, and formatted text exactly matching the image layout.
+ */
 function reconstructLayout(data: RawData): { formattedText: string; tableData: TableData } {
   const words: WordBox[] = [];
 
@@ -215,7 +222,7 @@ function reconstructLayout(data: RawData): { formattedText: string; tableData: T
 
     const matchedGroup = lineGroups.find((group) => {
       const groupY = group.reduce((sum, w) => sum + (w.y0 + w.y1) / 2, 0) / group.length;
-      return Math.abs(yCenter - groupY) < wordHeight * 0.5;
+      return Math.abs(yCenter - groupY) < wordHeight * 0.6;
     });
 
     if (matchedGroup) {
@@ -241,8 +248,8 @@ function reconstructLayout(data: RawData): { formattedText: string; tableData: T
     }
   });
 
-  const avgGap = totalGapCount > 0 ? totalGapSum / totalGapCount : 15;
-  const columnGapThreshold = Math.max(18, avgGap * 2.2);
+  const avgGap = totalGapCount > 0 ? totalGapSum / totalGapCount : 12;
+  const columnGapThreshold = Math.max(10, avgGap * 1.25);
 
   // 3. Extract Rows and Cells for each line
   const rawRows: string[][] = [];
@@ -257,7 +264,7 @@ function reconstructLayout(data: RawData): { formattedText: string; tableData: T
       if (i < group.length - 1) {
         const next = group[i + 1];
         const gap = next.x0 - curr.x1;
-        // If gap exceeds threshold, end current cell and start a new column cell
+        // If gap exceeds column gap threshold, complete current cell and start next column cell
         if (gap >= columnGapThreshold) {
           rowCells.push(currentCellWords.join(" "));
           currentCellWords = [];
@@ -273,9 +280,9 @@ function reconstructLayout(data: RawData): { formattedText: string; tableData: T
     }
   });
 
-  // 4. Detect Table Structure: If 2 or more rows have 2 or more columns
+  // 4. Detect Table Structure
   const multiColRows = rawRows.filter((r) => r.length >= 2);
-  const isTable = rawRows.length >= 2 && multiColRows.length >= Math.ceil(rawRows.length * 0.4);
+  const isTable = rawRows.length >= 1 && multiColRows.length >= 1;
 
   // Normalize column count across all rows for consistent table grid
   const maxCols = Math.max(...rawRows.map((r) => r.length), 1);
@@ -302,7 +309,6 @@ function reconstructLayout(data: RawData): { formattedText: string; tableData: T
   }
 
   // 7. Generate Aligned Formatted Plain Text
-  // Calculate maximum character width per column for clean monospaced alignment
   const colWidths: number[] = new Array(maxCols).fill(0);
   tableRows.forEach((row) => {
     row.forEach((cell, cIdx) => {
@@ -336,21 +342,20 @@ export async function extractText(
 
   onProgress?.(10);
 
-  // Instant GPU pre-processing
+  // GPU contrast & resolution enhancement
   const processedBlob = await preprocessImage(file, {
     grayscale: true,
-    contrast: advancedEnhance ? 135 : 120,
+    contrast: advancedEnhance ? 150 : 140,
     advancedEnhance,
   });
 
   onProgress?.(20);
 
-  // Fetch Tesseract WASM worker with progress logger
+  // Fetch Tesseract WASM worker with PSM mode 6 (structured table)
   const worker = await getWorker(language, onProgress);
 
   const processedFile = new File([processedBlob], file.name, { type: "image/png" });
 
-  // Pass blocks: true & lines: true to retrieve complete spatial word coordinates
   const result = await worker.recognize(
     processedFile,
     {},

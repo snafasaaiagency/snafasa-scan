@@ -128,7 +128,7 @@ export default function ConvertPage() {
   const showAd = plan === "free";
 
   return (
-    <div className="min-h-screen pt-28 pb-20 px-4">
+    <div className="min-h-screen pt-36 sm:pt-40 pb-20 px-4">
       <div className="mx-auto max-w-5xl">
         {/* Page header */}
         <div className="text-center mb-10">

@@ -32,7 +32,7 @@ type ViewMode = "formatted" | "table" | "raw";
 export default function ResultsPanel({ result, fileName, plan, onReset }: ResultsPanelProps) {
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(
-    result.tableData.isTable ? "table" : "formatted"
+    result.tableData.isTable && result.tableData.rows.length > 0 ? "table" : "formatted"
   );
   const [editableText, setEditableText] = useState(result.formattedText || result.text);
   const [tableRows, setTableRows] = useState<string[][]>(result.tableData.rows || []);
@@ -43,22 +43,27 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
 
   const handleCopy = useCallback(async () => {
     let textToCopy = editableText;
-    if (viewMode === "table" && result.tableData.isTable) {
-      textToCopy = result.tableData.csvText;
+    if (viewMode === "table" && tableRows.length > 0) {
+      textToCopy = tableRows
+        .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
+        .join("\n");
     }
     const ok = await copyToClipboard(textToCopy);
     if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [editableText, viewMode, result.tableData]);
+  }, [editableText, viewMode, tableRows]);
 
   const handleDownloadTxt = () => downloadTextFile(editableText, `${baseName}.txt`);
   const handleDownloadDocx = () => exportAsDocx(editableText, baseName);
   const handleDownloadPdf = () => exportAsPdf(editableText, baseName);
   const handleDownloadCsv = () => {
-    if (result.tableData.isTable && result.tableData.csvText) {
-      downloadTextFile(result.tableData.csvText, `${baseName}.csv`);
+    if (tableRows.length > 0) {
+      const csvStr = tableRows
+        .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+      downloadTextFile(csvStr, `${baseName}.csv`);
     } else {
       exportAsCsv(editableText, baseName);
     }
@@ -69,7 +74,6 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
       r === rIdx ? row.map((cell, c) => (c === cIdx ? val : cell)) : row
     );
     setTableRows(updated);
-    // Update editable CSV text as well
     const updatedCsv = updated
       .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
       .join("\n");
@@ -78,6 +82,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
 
   const wordCount = editableText.trim() ? editableText.trim().split(/\s+/).length : 0;
   const charCount = editableText.length;
+  const hasTable = tableRows.length > 0;
 
   return (
     <div className="card animate-fade-in overflow-hidden">
@@ -95,7 +100,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
           </div>
           <div>
             <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              {result.tableData.isTable ? "Table & Layout Extracted" : "Text Extracted Successfully"}
+              {hasTable ? "Table & Layout Extracted" : "Text Extracted Successfully"}
             </p>
             <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
               {wordCount} words · {charCount} characters
@@ -117,67 +122,70 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
         </div>
       </div>
 
-      {/* View Mode Tabs (Formatted Layout vs Interactive Table Grid vs Raw) */}
+      {/* Segmented Control View Mode Tabs */}
       <div
-        className="flex items-center gap-2 px-5 py-2.5 border-b text-xs font-medium"
+        className="flex flex-wrap items-center gap-2 px-5 py-3 border-b text-xs font-medium"
         style={{ borderColor: "var(--color-border)", background: "var(--color-surface-1)" }}
       >
-        <span style={{ color: "var(--color-text-muted)" }} className="mr-2 hidden sm:inline">
+        <span style={{ color: "var(--color-text-muted)" }} className="mr-1 font-semibold">
           View Mode:
         </span>
 
-        {result.tableData.isTable && (
+        {hasTable && (
           <button
+            type="button"
             onClick={() => setViewMode("table")}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
-              viewMode === "table"
-                ? "bg-primary-500 text-white font-bold shadow-sm"
-                : "btn-ghost text-secondary"
-            )}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-semibold"
+            style={{
+              background: viewMode === "table" ? "var(--color-primary-500)" : "var(--color-surface-3)",
+              color: viewMode === "table" ? "#ffffff" : "var(--color-text-primary)",
+              border: viewMode === "table" ? "1px solid var(--color-primary-600)" : "1px solid var(--color-border)",
+            }}
           >
             <Grid className="h-3.5 w-3.5" />
-            Table View ({tableRows.length} rows)
+            Table Grid ({tableRows.length} rows)
           </button>
         )}
 
         <button
+          type="button"
           onClick={() => { setViewMode("formatted"); setEditableText(result.formattedText || result.text); }}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
-            viewMode === "formatted"
-              ? "bg-primary-500 text-white font-bold shadow-sm"
-              : "btn-ghost text-secondary"
-          )}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-semibold"
+          style={{
+            background: viewMode === "formatted" ? "var(--color-primary-500)" : "var(--color-surface-3)",
+            color: viewMode === "formatted" ? "#ffffff" : "var(--color-text-primary)",
+            border: viewMode === "formatted" ? "1px solid var(--color-primary-600)" : "1px solid var(--color-border)",
+          }}
         >
           <AlignLeft className="h-3.5 w-3.5" />
           Formatted Layout
         </button>
 
         <button
+          type="button"
           onClick={() => { setViewMode("raw"); setEditableText(result.text); }}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
-            viewMode === "raw"
-              ? "bg-primary-500 text-white font-bold shadow-sm"
-              : "btn-ghost text-secondary"
-          )}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-semibold"
+          style={{
+            background: viewMode === "raw" ? "var(--color-primary-500)" : "var(--color-surface-3)",
+            color: viewMode === "raw" ? "#ffffff" : "var(--color-text-primary)",
+            border: viewMode === "raw" ? "1px solid var(--color-primary-600)" : "1px solid var(--color-border)",
+          }}
         >
           <FileText className="h-3.5 w-3.5" />
-          Plain Unformatted
+          Plain Text
         </button>
       </div>
 
       {/* Content View Area */}
       <div className="p-5">
-        {viewMode === "table" && tableRows.length > 0 ? (
+        {viewMode === "table" && hasTable ? (
           <div className="overflow-x-auto max-h-[500px] border rounded-xl" style={{ borderColor: "var(--color-border)" }}>
             <table className="w-full text-left text-xs border-collapse font-mono" style={{ background: "var(--color-surface-2)" }}>
               <thead>
                 <tr className="border-b" style={{ borderColor: "var(--color-border)", background: "var(--color-surface-3)" }}>
                   {tableRows[0]?.map((_, cIdx) => (
                     <th key={cIdx} className="p-3 font-bold border-r uppercase tracking-wider" style={{ borderColor: "var(--color-border)", color: "var(--color-primary-500)" }}>
-                      Col {cIdx + 1}
+                      Column {cIdx + 1}
                     </th>
                   ))}
                 </tr>
@@ -195,7 +203,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
                           type="text"
                           value={cell}
                           onChange={(e) => handleTableCellChange(rIdx, cIdx, e.target.value)}
-                          className="w-full bg-transparent border-none outline-none text-xs p-1 focus:ring-1 focus:ring-primary-500 rounded"
+                          className="w-full bg-transparent border-none outline-none text-xs p-1.5 focus:ring-1 focus:ring-primary-500 rounded font-medium"
                           style={{ color: "var(--color-text-primary)" }}
                         />
                       </td>
@@ -223,11 +231,11 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 mt-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-3 text-xs" style={{ color: "var(--color-text-muted)" }}>
           <p>✏️ Click any text or table cell to edit before exporting.</p>
-          {result.tableData.isTable && (
-            <p className="font-semibold" style={{ color: "var(--color-success)" }}>
-              📊 Table layout detected & structured automatically!
+          {hasTable && (
+            <p className="font-semibold flex items-center gap-1" style={{ color: "var(--color-success)" }}>
+              <Grid className="h-3.5 w-3.5" /> Table layout structured & aligned automatically
             </p>
           )}
         </div>
