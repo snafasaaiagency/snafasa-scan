@@ -62,12 +62,11 @@ export default function Navbar() {
           style={{ fontFamily: "Space Grotesk, sans-serif" }}
         >
           <Image
-            src="/logo.png"
+            src="/icon.svg"
             alt={`${APP_NAME} logo`}
-            width={38}
-            height={38}
+            width={34}
+            height={34}
             priority
-            className="rounded-xl shadow-md border border-white/10"
           />
           <span style={{ color: "var(--color-text-primary)" }}>
             {APP_NAME}

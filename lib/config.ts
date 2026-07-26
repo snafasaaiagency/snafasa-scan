@@ -1,9 +1,9 @@
 // ──────────────────────────────────────────────────────────────
-// SnafasaScan — Central Configuration
+// Snafasa Scan — Central Configuration
 // Change APP_NAME here once and it propagates everywhere.
 // ──────────────────────────────────────────────────────────────
 
-export const APP_NAME = "SnafasaScan";
+export const APP_NAME = "Snafasa Scan";
 export const APP_TAGLINE = "Extract text from any image — instantly, privately, free";
 export const AGENCY_NAME = "Snafasa AI Agency";
 export const AGENCY_WEBSITE = "https://snafasa.com";
@@ -71,7 +71,7 @@ export interface TierDef {
   highlighted?: boolean;
 }
 
-// Payoneer Payment Link Minimum Threshold Compliant Pricing Tiers (Minimum $20 USD)
+// Payoneer-compliant Pricing Tiers ($25, $30, $35)
 export const TIERS: TierDef[] = [
   {
     id: "free",
@@ -90,8 +90,8 @@ export const TIERS: TierDef[] = [
   {
     id: "tier1",
     name: "Starter",
-    priceUsd: 20,
-    priceLabel: "$20 one-time",
+    priceUsd: 25,
+    priceLabel: "$25 one-time",
     description: "For users needing higher file limits & CSV exports.",
     maxImagesPerConversion: 10,
     maxFileSizeMb: 25,
@@ -104,8 +104,8 @@ export const TIERS: TierDef[] = [
   {
     id: "tier2",
     name: "Standard",
-    priceUsd: 35,
-    priceLabel: "$35 one-time",
+    priceUsd: 30,
+    priceLabel: "$30 one-time",
     description: "Most popular for students & working professionals.",
     maxImagesPerConversion: 25,
     maxFileSizeMb: 50,
@@ -120,8 +120,8 @@ export const TIERS: TierDef[] = [
   {
     id: "tier3",
     name: "Pro",
-    priceUsd: 50,
-    priceLabel: "$50 one-time",
+    priceUsd: 35,
+    priceLabel: "$35 one-time",
     description: "For power users processing multi-page documents.",
     maxImagesPerConversion: 50,
     maxFileSizeMb: 100,
@@ -134,8 +134,8 @@ export const TIERS: TierDef[] = [
   {
     id: "tier4",
     name: "Business",
-    priceUsd: 99,
-    priceLabel: "$99 one-time",
+    priceUsd: 50,
+    priceLabel: "$50 one-time",
     description: "Unlimited batch conversion for agency workflow.",
     maxImagesPerConversion: "unlimited",
     maxFileSizeMb: 250,
