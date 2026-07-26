@@ -52,6 +52,9 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
   alternates: { canonical: BASE_URL },
+  verification: {
+    google: "TcR0Cyyp7dnvDDayr-aUTjnGwy8n-bdzgwLr1q0aBU4",
+  },
 };
 
 // JSON-LD structured data — SoftwareApplication
