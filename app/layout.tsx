@@ -30,6 +30,11 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Snafasa AI Agency" }],
   creator: "Snafasa AI Agency",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -38,13 +43,13 @@ export const metadata: Metadata = {
     title: `${APP_NAME} — ${APP_TAGLINE}`,
     description:
       "Free online OCR. Extract text from any image in seconds. Private, fast, no signup required for first 3 conversions.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${APP_NAME} — OCR Tool` }],
+    images: [{ url: "/logo.png", width: 800, height: 800, alt: APP_NAME }],
   },
   twitter: {
     card: "summary_large_image",
     title: `${APP_NAME} — ${APP_TAGLINE}`,
     description: "Free online OCR tool. Extract text from images instantly. 100% private — no image ever leaves your browser.",
-    images: ["/og-image.png"],
+    images: ["/logo.png"],
   },
   robots: {
     index: true,

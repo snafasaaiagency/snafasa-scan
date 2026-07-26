@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { Scan, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { APP_NAME, AGENCY_NAME } from "@/lib/config";
 
 const FOOTER_LINKS = {
@@ -34,13 +35,14 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
           {/* Brand */}
           <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-2 font-bold text-lg mb-3">
-              <span
-                className="flex h-7 w-7 items-center justify-center rounded-lg"
-                style={{ background: "var(--color-primary-500)" }}
-              >
-                <Scan className="h-3.5 w-3.5 text-white" />
-              </span>
+            <Link href="/" className="flex items-center gap-2.5 font-bold text-lg mb-3">
+              <Image
+                src="/logo.png"
+                alt={`${APP_NAME} logo`}
+                width={30}
+                height={30}
+                className="rounded-lg shadow-sm"
+              />
               <span style={{ color: "var(--color-text-primary)", fontFamily: "Space Grotesk, sans-serif" }}>
                 {APP_NAME}
               </span>

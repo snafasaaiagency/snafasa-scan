@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Menu, X, Moon, Sun, Scan, User, LogOut, Settings, ChevronDown } from "lucide-react";
+import { Menu, X, Moon, Sun, User, LogOut, Settings, ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { APP_NAME } from "@/lib/config";
 import { cn } from "@/lib/utils";
@@ -57,15 +58,16 @@ export default function Navbar() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2 font-bold text-xl"
+          className="flex items-center gap-2.5 font-bold text-xl"
           style={{ fontFamily: "Space Grotesk, sans-serif" }}
         >
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-lg"
-            style={{ background: "var(--color-primary-500)" }}
-          >
-            <Scan className="h-4 w-4 text-white" />
-          </span>
+          <Image
+            src="/logo.png"
+            alt={`${APP_NAME} logo`}
+            width={34}
+            height={34}
+            className="rounded-lg shadow-sm"
+          />
           <span style={{ color: "var(--color-text-primary)" }}>
             {APP_NAME}
           </span>
