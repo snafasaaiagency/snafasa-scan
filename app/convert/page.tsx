@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Languages,
   Wand2,
@@ -15,7 +15,9 @@ import toast from "react-hot-toast";
 
 import UploadZone from "@/components/UploadZone";
 import ResultsPanel from "@/components/ResultsPanel";
+import HistoryPanel from "@/components/HistoryPanel";
 import AdSlot from "@/components/AdSlot";
+import { saveToHistory } from "@/lib/history";
 
 import { useAuth } from "@/lib/auth-context";
 import { extractText, type OcrResult } from "@/lib/ocr";
@@ -30,6 +32,7 @@ import { getTrialCount, incrementTrialCount, formatBytes } from "@/lib/utils";
 type ConvertState = "idle" | "processing" | "done" | "error";
 
 export default function ConvertPage() {
+  const resultTextRef = useRef<string>("");
   const { user, profile } = useAuth();
   const plan = profile?.plan ?? "free";
   const tierDef = getTierDef(plan);
@@ -70,7 +73,7 @@ export default function ConvertPage() {
     [user]
   );
 
-  const handleExtract = async () => {
+  const handleExtract = useCallback(async () => {
     if (!file) return;
 
     setState("processing");
@@ -87,6 +90,16 @@ export default function ConvertPage() {
 
       setResult(ocrResult);
       setState("done");
+
+      // Save to local history
+      saveToHistory({
+        fileName: file.name,
+        extractedText: ocrResult.text,
+        formattedText: ocrResult.formattedText,
+        wordCount: (ocrResult.formattedText || ocrResult.text).trim().split(/\s+/).length,
+        charCount: (ocrResult.formattedText || ocrResult.text).length,
+        confidence: ocrResult.confidence,
+      });
 
       // Increment trial count for anonymous users
       if (!user) {
@@ -113,7 +126,27 @@ export default function ConvertPage() {
         (err as Error).message || "OCR failed. Please try a different image."
       );
     }
-  };
+  }, [file, language, tierDef.advancedEnhance, user]);
+
+  // Keep result text ref in sync for keyboard shortcut
+  useEffect(() => {
+    if (result) resultTextRef.current = result.formattedText || result.text;
+  }, [result]);
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Enter → run OCR
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        if (file && state !== "processing" && state !== "done") {
+          e.preventDefault();
+          handleExtract();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [file, state, handleExtract]);
 
   const handleReset = () => {
     if (preview) URL.revokeObjectURL(preview);
@@ -308,6 +341,9 @@ export default function ConvertPage() {
                 onReset={handleReset}
               />
             )}
+
+            {/* Conversion History */}
+            <HistoryPanel />
           </div>
 
           {/* Right: Sidebar */}

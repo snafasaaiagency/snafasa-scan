@@ -11,11 +11,14 @@ import {
   Globe,
   Lock,
   ChevronRight,
-  Star,
   CheckCircle2,
+  Check,
+  X as XIcon,
 } from "lucide-react";
 import { APP_NAME, APP_TAGLINE } from "@/lib/config";
 import PricingGrid from "@/components/PricingCard";
+import StatsCounter from "@/components/StatsCounter";
+import FaqAccordion from "@/components/FaqAccordion";
 
 export const metadata: Metadata = {
   title: `${APP_NAME} — Free Online OCR | Extract Text from Images`,
@@ -71,7 +74,7 @@ const FEATURES = [
 
 const FAQ = [
   {
-    q: "Is SnafasaScan really free?",
+    q: "Is Snafasa Scan really free?",
     a: "Yes. The free tier lets you convert 1 image at a time with no cost and no credit card required. Your first 3 conversions don't even need a sign-up.",
   },
   {
@@ -102,20 +105,62 @@ const TESTIMONIALS = [
     author: "Aisha K.",
     role: "Graduate student",
     stars: 5,
+    color: "#7c3aed",
   },
   {
     text: "Our team scans business cards and receipts using the batch mode. It saves hours of manual typing.",
     author: "Marco L.",
     role: "Operations manager",
     stars: 5,
+    color: "#0284c7",
   },
   {
     text: "Finally a free OCR tool that isn't plastered with popups or paywalled after one use. The privacy angle is a genuine selling point.",
     author: "Sam T.",
     role: "Freelance designer",
     stars: 5,
+    color: "#059669",
   },
 ];
+
+// Competitor comparison data
+const COMPARISON = {
+  tools: ["Snafasa Scan", "Google Docs OCR", "Adobe Acrobat", "imagetotext.info"],
+  features: [
+    {
+      label: "100% Private (no upload)",
+      values: [true, false, false, false],
+    },
+    {
+      label: "Free to use",
+      values: [true, true, false, true],
+    },
+    {
+      label: "No account required",
+      values: [true, false, false, true],
+    },
+    {
+      label: "Table detection",
+      values: [true, false, true, false],
+    },
+    {
+      label: "20+ languages",
+      values: [true, true, true, false],
+    },
+    {
+      label: "Export to .docx / .pdf",
+      values: [true, false, true, false],
+    },
+    {
+      label: "Works offline",
+      values: [true, false, false, false],
+    },
+    {
+      label: "One-time lifetime pricing",
+      values: [true, false, false, false],
+    },
+  ],
+};
 
 export default function LandingPage() {
   return (
@@ -167,8 +212,23 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Animated Statistics ───────────────────────────────── */}
+      <section className="py-20 px-4" style={{ background: "var(--color-surface-2)" }}>
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--color-primary-500)" }}>
+              Trusted worldwide
+            </p>
+            <h2 className="text-3xl font-black" style={{ color: "var(--color-text-primary)" }}>
+              By the numbers
+            </h2>
+          </div>
+          <StatsCounter />
+        </div>
+      </section>
+
       {/* ── How it works ─────────────────────────────────────── */}
-      <section className="py-24 px-4" style={{ background: "var(--color-surface-2)" }}>
+      <section className="py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--color-primary-500)" }}>
@@ -210,11 +270,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features ─────────────────────────────────────────── */}
-      <section className="py-24 px-4">
+      <section className="py-24 px-4" style={{ background: "var(--color-surface-2)" }}>
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--color-primary-500)" }}>
-              Why SnafasaScan
+              Why Snafasa Scan
             </p>
             <h2 className="text-4xl font-black mb-4" style={{ color: "var(--color-text-primary)" }}>
               Built different
@@ -235,6 +295,86 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Competitor Comparison ─────────────────────────────── */}
+      <section className="py-24 px-4">
+        <div className="mx-auto max-w-5xl">
+          <div className="text-center mb-16">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--color-primary-500)" }}>
+              How we compare
+            </p>
+            <h2 className="text-4xl font-black mb-4" style={{ color: "var(--color-text-primary)" }}>
+              Snafasa Scan vs the rest
+            </h2>
+            <p className="text-lg max-w-xl mx-auto" style={{ color: "var(--color-text-secondary)" }}>
+              See why thousands of users choose Snafasa Scan over other OCR tools.
+            </p>
+            <div className="section-divider mt-6" />
+          </div>
+
+          <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ background: "var(--color-surface-2)", borderBottom: "2px solid var(--color-border)" }}>
+                    <th className="text-left px-5 py-4 font-semibold" style={{ color: "var(--color-text-muted)", minWidth: "200px" }}>
+                      Feature
+                    </th>
+                    {COMPARISON.tools.map((tool, i) => (
+                      <th key={tool} className="px-4 py-4 font-bold text-center" style={{
+                        color: i === 0 ? "var(--color-primary-600)" : "var(--color-text-secondary)",
+                        background: i === 0 ? "var(--color-primary-50)" : undefined,
+                        borderLeft: "1px solid var(--color-border)",
+                        minWidth: "130px",
+                      }}>
+                        {i === 0 && (
+                          <span className="block text-xs font-bold px-2 py-0.5 rounded-full mb-1 mx-auto w-fit"
+                            style={{ background: "var(--color-primary-100)", color: "var(--color-primary-700)" }}>
+                            ✦ Best Choice
+                          </span>
+                        )}
+                        {tool}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARISON.features.map((feature, fi) => (
+                    <tr
+                      key={feature.label}
+                      style={{
+                        borderBottom: "1px solid var(--color-border)",
+                        background: fi % 2 === 0 ? "transparent" : "var(--color-surface-1)",
+                      }}
+                    >
+                      <td className="px-5 py-3.5 font-medium text-sm" style={{ color: "var(--color-text-primary)" }}>
+                        {feature.label}
+                      </td>
+                      {feature.values.map((val, i) => (
+                        <td key={i} className="px-4 py-3.5 text-center"
+                          style={{ background: i === 0 ? "var(--color-primary-50)" : undefined, borderLeft: "1px solid var(--color-border)" }}>
+                          {val ? (
+                            <Check className="h-5 w-5 mx-auto" style={{ color: "var(--color-success)" }} />
+                          ) : (
+                            <XIcon className="h-4 w-4 mx-auto" style={{ color: "var(--color-text-muted)", opacity: 0.4 }} />
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="text-center mt-8">
+            <Link href="/convert" className="btn btn-primary btn-lg">
+              <Scan className="h-5 w-5" />
+              Try Snafasa Scan free — no account needed
+            </Link>
           </div>
         </div>
       </section>
@@ -275,18 +415,30 @@ export default function LandingPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {TESTIMONIALS.map((t) => (
-              <div key={t.author} className="card p-7">
+              <div key={t.author} className="card p-7 hover:-translate-y-1 transition-all duration-300">
+                {/* Stars */}
                 <div className="flex gap-1 mb-4">
                   {Array.from({ length: t.stars }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" style={{ color: "var(--color-accent-500)" }} />
+                    <svg key={i} className="h-4 w-4 fill-current" style={{ color: "var(--color-accent-500)" }} viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
                   ))}
                 </div>
                 <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--color-text-secondary)" }}>
                   &ldquo;{t.text}&rdquo;
                 </p>
-                <div>
-                  <p className="font-semibold text-sm" style={{ color: "var(--color-text-primary)" }}>{t.author}</p>
-                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>{t.role}</p>
+                {/* Author with avatar */}
+                <div className="flex items-center gap-3">
+                  <div
+                    className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                    style={{ background: t.color }}
+                  >
+                    {t.author.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm" style={{ color: "var(--color-text-primary)" }}>{t.author}</p>
+                    <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>{t.role}</p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -303,21 +455,7 @@ export default function LandingPage() {
             </h2>
             <div className="section-divider" />
           </div>
-          <div className="space-y-4">
-            {FAQ.map((item) => (
-              <details key={item.q} className="card p-6 group">
-                <summary className="flex items-center justify-between cursor-pointer list-none font-semibold"
-                  style={{ color: "var(--color-text-primary)" }}>
-                  {item.q}
-                  <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90 shrink-0 ml-4"
-                    style={{ color: "var(--color-text-muted)" }} />
-                </summary>
-                <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
-                  {item.a}
-                </p>
-              </details>
-            ))}
-          </div>
+          <FaqAccordion items={FAQ} />
         </div>
       </section>
 

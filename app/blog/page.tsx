@@ -11,10 +11,49 @@ export const metadata: Metadata = {
 
 export const BLOG_POSTS = [
   {
+    slug: "ocr-for-students-study-tips",
+    title: "OCR for Students: 5 Ways to Study Smarter in 2025",
+    excerpt: "Discover how students use free OCR tools to digitize textbook pages, handwritten notes, and lecture slides — and save hours every week.",
+    date: "July 26, 2025",
+    readTime: "5 min read",
+    category: "Students",
+  },
+  {
+    slug: "how-to-extract-text-from-receipts",
+    title: "How to Extract Text from Receipts & Invoices (Free OCR Guide)",
+    excerpt: "Stop manually typing receipt data into spreadsheets. Learn how free OCR tools digitize receipts and export directly to CSV tables.",
+    date: "July 25, 2025",
+    readTime: "4 min read",
+    category: "Finance",
+  },
+  {
+    slug: "arabic-ocr-guide",
+    title: "Arabic OCR: Extract Text from Arabic Images Online (Free)",
+    excerpt: "Learn how right-to-left Arabic OCR works, how to handle cursive scripts, and get the highest accuracy on Arabic documents.",
+    date: "July 24, 2025",
+    readTime: "4 min read",
+    category: "Languages",
+  },
+  {
+    slug: "handwriting-to-text",
+    title: "Convert Handwriting to Text Free Online (2025 Guide)",
+    excerpt: "Turn handwritten notes, letters, and whiteboards into editable digital text using free AI-powered OCR with zero image uploads.",
+    date: "July 23, 2025",
+    readTime: "5 min read",
+    category: "How-To",
+  },
+  {
+    slug: "best-free-ocr-tools-2025",
+    title: "7 Best Free OCR Tools in 2025 (In-Depth Comparison)",
+    excerpt: "Comparing the top 7 free online OCR tools across privacy, speed, accuracy, and ease of use.",
+    date: "July 22, 2025",
+    readTime: "6 min read",
+    category: "Roundup",
+  },
+  {
     slug: "how-to-extract-text-from-scanned-pdf",
     title: "How to Extract Text from a Scanned PDF Page for Free",
-    excerpt:
-      "Stuck with a scanned PDF document that won't let you select or copy text? Here is how to quickly extract editable text without installing expensive software.",
+    excerpt: "Stuck with a scanned PDF document that won't let you select or copy text? Quickly extract editable text without expensive software.",
     date: "July 20, 2025",
     readTime: "4 min read",
     category: "Tutorials",
@@ -22,8 +61,7 @@ export const BLOG_POSTS = [
   {
     slug: "ocr-best-practices-document-photography",
     title: "Best Practices for Photographing Documents for High-Accuracy OCR",
-    excerpt:
-      "Lighting, angle, and contrast matter. Discover simple camera and phone photography tricks to boost optical character recognition accuracy up to 99%.",
+    excerpt: "Lighting, angle, and contrast matter. Discover simple camera and phone photography tricks to boost OCR accuracy up to 99%.",
     date: "July 18, 2025",
     readTime: "5 min read",
     category: "Guides",
@@ -31,8 +69,7 @@ export const BLOG_POSTS = [
   {
     slug: "free-vs-paid-ocr-tools-comparison",
     title: "Browser-Based Local OCR vs Cloud APIs: Privacy, Speed & Cost Compared",
-    excerpt:
-      "Why client-side WebAssembly OCR engines like Tesseract.js are changing document privacy and why you shouldn't pay monthly for basic text recognition.",
+    excerpt: "Why client-side WebAssembly OCR engines like Tesseract.js are changing document privacy and saving you subscription fees.",
     date: "July 12, 2025",
     readTime: "6 min read",
     category: "Analysis",
@@ -42,7 +79,7 @@ export const BLOG_POSTS = [
 export default function BlogPage() {
   return (
     <div className="min-h-screen pt-28 pb-20 px-4">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         {/* Header */}
         <div className="text-center mb-16">
           <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--color-primary-500)" }}>
@@ -58,7 +95,7 @@ export default function BlogPage() {
         </div>
 
         {/* Posts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {BLOG_POSTS.map((post) => (
             <article key={post.slug} className="card p-6 flex flex-col justify-between group hover:-translate-y-1 transition-all duration-300">
               <div>

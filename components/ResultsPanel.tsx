@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Copy,
   Download,
@@ -14,6 +14,9 @@ import {
   Zap,
   AlignLeft,
   Grid,
+  Share2,
+  Code2,
+  BookOpen,
 } from "lucide-react";
 import { cn, copyToClipboard, downloadTextFile, exportAsDocx, exportAsPdf, exportAsCsv, timestampedFilename, formatMs } from "@/lib/utils";
 import type { OcrResult } from "@/lib/ocr";
@@ -29,8 +32,90 @@ interface ResultsPanelProps {
 
 type ViewMode = "formatted" | "table" | "raw";
 
+// Simple language detection by script/character ranges
+function detectLanguage(text: string): { label: string; emoji: string } | null {
+  if (!text || text.trim().length < 10) return null;
+  const arabicCount = (text.match(/[\u0600-\u06FF]/g) || []).length;
+  const chineseCount = (text.match(/[\u4E00-\u9FFF]/g) || []).length;
+  const cyrillicCount = (text.match(/[\u0400-\u04FF]/g) || []).length;
+  const hindiCount = (text.match(/[\u0900-\u097F]/g) || []).length;
+  const japaneseCount = (text.match(/[\u3040-\u30FF]/g) || []).length;
+  const total = text.replace(/\s/g, "").length || 1;
+  if (arabicCount / total > 0.2) return { label: "Arabic", emoji: "🌍" };
+  if (chineseCount / total > 0.2) return { label: "Chinese", emoji: "🌏" };
+  if (cyrillicCount / total > 0.15) return { label: "Russian/Cyrillic", emoji: "🌍" };
+  if (hindiCount / total > 0.15) return { label: "Hindi", emoji: "🌏" };
+  if (japaneseCount / total > 0.15) return { label: "Japanese", emoji: "🌏" };
+  const latinCount = (text.match(/[a-zA-Z]/g) || []).length;
+  if (latinCount / total > 0.3) return { label: "English", emoji: "🌐" };
+  return null;
+}
+
+// Text → Markdown: preserve lines as paragraphs/headers
+function toMarkdown(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return "";
+      // Heuristic: short ALL-CAPS lines → heading
+      if (trimmed.length < 60 && trimmed === trimmed.toUpperCase() && trimmed.length > 3) {
+        return `## ${trimmed}`;
+      }
+      return trimmed;
+    })
+    .join("\n");
+}
+
+// Table rows → HTML table
+function toHtmlTable(rows: string[][]): string {
+  if (!rows.length) return "";
+  const header = rows[0].map((c) => `<th>${c}</th>`).join("");
+  const body = rows
+    .slice(1)
+    .map((row) => `<tr>${row.map((c) => `<td>${c}</td>`).join("")}</tr>`)
+    .join("\n");
+  return `<table>\n  <thead>\n    <tr>${header}</tr>\n  </thead>\n  <tbody>\n    ${body}\n  </tbody>\n</table>`;
+}
+
+// Confetti burst using CSS
+function triggerConfetti() {
+  const container = document.createElement("div");
+  container.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden;`;
+  document.body.appendChild(container);
+  const colors = ["#0284c7", "#7c3aed", "#00d8f6", "#f59e0b", "#10b981", "#ef4444"];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement("div");
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const size = Math.random() * 10 + 6;
+    const left = Math.random() * 100;
+    const delay = Math.random() * 0.8;
+    const duration = Math.random() * 1.5 + 1.5;
+    el.style.cssText = `
+      position:absolute; width:${size}px; height:${size}px;
+      background:${color}; border-radius:${Math.random() > 0.5 ? "50%" : "2px"};
+      left:${left}%; top:-20px; opacity:1;
+      animation: confettiFall ${duration}s ease-in ${delay}s forwards;
+    `;
+    container.appendChild(el);
+  }
+  // Inject keyframes if not present
+  if (!document.getElementById("confetti-style")) {
+    const style = document.createElement("style");
+    style.id = "confetti-style";
+    style.textContent = `@keyframes confettiFall {
+      0% { transform: translateY(0) rotate(0deg); opacity:1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity:0; }
+    }`;
+    document.head.appendChild(style);
+  }
+  setTimeout(() => container.remove(), 3500);
+}
+
 export default function ResultsPanel({ result, fileName, plan, onReset }: ResultsPanelProps) {
   const [copied, setCopied] = useState(false);
+  const [copiedMd, setCopiedMd] = useState(false);
+  const [copiedHtml, setCopiedHtml] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(
     result.tableData.isTable && result.tableData.rows.length > 0 ? "table" : "formatted"
   );
@@ -40,6 +125,21 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const tier = getTierDef(plan);
   const baseName = timestampedFilename(fileName ? fileName.replace(/\.[^.]+$/, "") : "snafasascan_result");
+
+  const wordCount = editableText.trim() ? editableText.trim().split(/\s+/).length : 0;
+  const charCount = editableText.length;
+  const readingTimeMin = Math.max(1, Math.round(wordCount / 200));
+  const hasTable = tableRows.length > 0;
+  const detectedLang = detectLanguage(editableText);
+
+  // Confetti on first successful conversion
+  useEffect(() => {
+    const CONFETTI_KEY = "snafasa_confetti_done";
+    if (!localStorage.getItem(CONFETTI_KEY)) {
+      localStorage.setItem(CONFETTI_KEY, "1");
+      triggerConfetti();
+    }
+  }, []);
 
   const handleCopy = useCallback(async () => {
     let textToCopy = editableText;
@@ -54,6 +154,31 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
       setTimeout(() => setCopied(false), 2000);
     }
   }, [editableText, viewMode, tableRows]);
+
+  const handleCopyMarkdown = useCallback(async () => {
+    const md = toMarkdown(editableText);
+    const ok = await copyToClipboard(md);
+    if (ok) {
+      setCopiedMd(true);
+      setTimeout(() => setCopiedMd(false), 2000);
+    }
+  }, [editableText]);
+
+  const handleCopyHtml = useCallback(async () => {
+    const html = hasTable ? toHtmlTable(tableRows) : `<p>${editableText.replace(/\n/g, "</p>\n<p>")}</p>`;
+    const ok = await copyToClipboard(html);
+    if (ok) {
+      setCopiedHtml(true);
+      setTimeout(() => setCopiedHtml(false), 2000);
+    }
+  }, [editableText, hasTable, tableRows]);
+
+  const handleShareTwitter = () => {
+    const text = encodeURIComponent(
+      `Just extracted ${wordCount} words from an image using Snafasa Scan — free online OCR that works 100% in your browser! 🔍\n\nhttps://snafasascan.com`
+    );
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank", "noopener,noreferrer,width=600,height=450");
+  };
 
   const handleDownloadTxt = () => downloadTextFile(editableText, `${baseName}.txt`);
   const handleDownloadDocx = () => exportAsDocx(editableText, baseName);
@@ -80,10 +205,6 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
     setEditableText(updatedCsv);
   };
 
-  const wordCount = editableText.trim() ? editableText.trim().split(/\s+/).length : 0;
-  const charCount = editableText.length;
-  const hasTable = tableRows.length > 0;
-
   return (
     <div className="card animate-fade-in overflow-hidden">
       {/* Header */}
@@ -102,8 +223,17 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
             <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
               {hasTable ? "Table & Layout Extracted" : "Text Extracted Successfully"}
             </p>
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-              {wordCount} words · {charCount} characters
+            <p className="text-xs flex items-center gap-2" style={{ color: "var(--color-text-muted)" }}>
+              <span>{wordCount} words · {charCount} chars</span>
+              <span className="flex items-center gap-1">
+                <BookOpen className="h-3 w-3" />
+                ~{readingTimeMin} min read
+              </span>
+              {detectedLang && (
+                <span className="flex items-center gap-1 font-medium" style={{ color: "var(--color-primary-500)" }}>
+                  {detectedLang.emoji} {detectedLang.label} detected
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -122,7 +252,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
         </div>
       </div>
 
-      {/* Segmented Control View Mode Tabs */}
+      {/* View Mode Tabs */}
       <div
         className="flex flex-wrap items-center gap-2 px-5 py-3 border-b text-xs font-medium"
         style={{ borderColor: "var(--color-border)", background: "var(--color-surface-1)" }}
@@ -246,7 +376,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
         className="flex flex-wrap items-center gap-2 px-5 py-4 border-t"
         style={{ borderColor: "var(--color-border)", background: "var(--color-surface-2)" }}
       >
-        {/* Copy */}
+        {/* Copy plain */}
         <button
           onClick={handleCopy}
           className={cn("btn btn-primary btn-sm", copied && "opacity-80")}
@@ -254,7 +384,33 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
           {copied ? (
             <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</>
           ) : (
-            <><Copy className="h-3.5 w-3.5" /> {viewMode === "table" ? "Copy CSV Table" : "Copy Text"}</>
+            <><Copy className="h-3.5 w-3.5" /> {viewMode === "table" ? "Copy CSV" : "Copy Text"}</>
+          )}
+        </button>
+
+        {/* Copy as Markdown */}
+        <button
+          onClick={handleCopyMarkdown}
+          className={cn("btn btn-outline btn-sm", copiedMd && "opacity-80")}
+          title="Copy as Markdown"
+        >
+          {copiedMd ? (
+            <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</>
+          ) : (
+            <><Code2 className="h-3.5 w-3.5" /> Markdown</>
+          )}
+        </button>
+
+        {/* Copy as HTML */}
+        <button
+          onClick={handleCopyHtml}
+          className={cn("btn btn-outline btn-sm", copiedHtml && "opacity-80")}
+          title="Copy as HTML"
+        >
+          {copiedHtml ? (
+            <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</>
+          ) : (
+            <><Code2 className="h-3.5 w-3.5" /> {hasTable ? "HTML Table" : "HTML"}</>
           )}
         </button>
 
@@ -266,7 +422,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
         {/* Download CSV */}
         <button onClick={handleDownloadCsv} className="btn btn-outline btn-sm">
           <Table2 className="h-3.5 w-3.5" style={{ color: "var(--color-success)" }} />
-          .csv (Excel)
+          .csv
         </button>
 
         {/* Export dropdown (premium) */}
@@ -318,6 +474,16 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
             )}
           </div>
         )}
+
+        {/* Share on Twitter */}
+        <button
+          onClick={handleShareTwitter}
+          className="btn btn-outline btn-sm"
+          title="Share on X (Twitter)"
+        >
+          <Share2 className="h-3.5 w-3.5" />
+          Share
+        </button>
 
         {/* Spacer */}
         <div className="flex-1" />
