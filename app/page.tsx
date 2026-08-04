@@ -16,7 +16,6 @@ import {
   X as XIcon,
 } from "lucide-react";
 import { APP_NAME, APP_TAGLINE } from "@/lib/config";
-import PricingGrid from "@/components/PricingCard";
 import StatsCounter from "@/components/StatsCounter";
 import FaqAccordion from "@/components/FaqAccordion";
 
@@ -192,11 +191,8 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
           <Link href="/convert" className="btn btn-primary btn-lg">
             <Scan className="h-5 w-5" />
-            Convert image to text — free
+            Convert image to text — 100% Free
             <ChevronRight className="h-4 w-4" />
-          </Link>
-          <Link href="/pricing" className="btn btn-outline btn-lg">
-            View premium plans
           </Link>
         </div>
 
@@ -379,28 +375,22 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Pricing teaser ───────────────────────────────────── */}
-      <section className="py-24 px-4" style={{ background: "var(--color-surface-2)" }}>
-        <div className="mx-auto max-w-7xl">
-          <div className="text-center mb-16">
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--color-primary-500)" }}>
-              Simple, fair pricing
-            </p>
-            <h2 className="text-4xl font-black mb-4" style={{ color: "var(--color-text-primary)" }}>
-              One-time payments, lifetime access
-            </h2>
-            <p className="text-lg max-w-xl mx-auto" style={{ color: "var(--color-text-secondary)" }}>
-              No monthly subscriptions. Pay once for your tier and use it forever.
-            </p>
-            <div className="section-divider mt-6" />
-          </div>
-          <PricingGrid />
-          <p className="text-center text-sm mt-8" style={{ color: "var(--color-text-muted)" }}>
-            All premium tiers are one-time lifetime purchases — no recurring charges.{" "}
-            <Link href="/pricing" className="underline" style={{ color: "var(--color-primary-500)" }}>
-              Learn more about premium →
-            </Link>
+      {/* ── 100% Free banner ───────────────────────────────────── */}
+      <section className="py-20 px-4" style={{ background: "var(--color-surface-2)" }}>
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--color-primary-500)" }}>
+            100% Free Forever
           </p>
+          <h2 className="text-4xl font-black mb-4" style={{ color: "var(--color-text-primary)" }}>
+            All Features Unlocked — No Paid Plans, No Subscriptions
+          </h2>
+          <p className="text-lg max-w-2xl mx-auto mb-8" style={{ color: "var(--color-text-secondary)" }}>
+            Extract text in over 20 languages, export to Word, PDF, CSV, or TXT, and enhance low-resolution images — completely free.
+          </p>
+          <Link href="/convert" className="btn btn-primary btn-lg">
+            <Scan className="h-5 w-5" />
+            Start converting now
+          </Link>
         </div>
       </section>
 

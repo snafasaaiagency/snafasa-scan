@@ -48,19 +48,14 @@ export default function PrivacyPolicyPage() {
             We use <strong>Firebase Analytics</strong> (free, provided by Google) to collect anonymous, aggregated usage statistics, including page views, conversion events (e.g., &ldquo;conversion started,&rdquo; &ldquo;conversion completed&rdquo;), and feature usage. This data does not include image content and cannot be traced back to specific individuals.
           </p>
 
-          <h3>2.3 Payment Proof Screenshots</h3>
+          <h3>2.3 Conversion History</h3>
           <p>
-            If you upgrade to a premium plan, you upload a screenshot of your Payoneer payment confirmation. This image is stored in Firebase Storage at a secure path accessible only to our admin account. It is used solely to verify your payment and is deleted after your plan is confirmed or after 90 days, whichever comes first.
-          </p>
-
-          <h3>2.4 Conversion History (Premium Tiers)</h3>
-          <p>
-            For users on Standard, Pro, and Business tiers who opt into history, we store in Firestore: the filename, language used, a short preview of extracted text (first 200 characters), and the timestamp. We do not store the full extracted text or the original image.
+            For registered users who opt into history, we store in Firestore: the filename, language used, a short preview of extracted text (first 200 characters), and the timestamp. We do not store the full extracted text or the original image.
           </p>
 
           <h2>3. Cookies and Advertising</h2>
           <p>
-            We display <strong>Google AdSense</strong> advertisements to free-tier users. Google AdSense uses cookies and similar tracking technologies to serve personalized ads based on your browsing history. This is controlled by Google&rsquo;s privacy policy. You can opt out of personalized advertising at{" "}
+            We display <strong>Google AdSense</strong> advertisements to help support our free service. Google AdSense uses cookies and similar tracking technologies to serve personalized ads based on your browsing history. This is controlled by Google&rsquo;s privacy policy. You can opt out of personalized advertising at{" "}
             <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer">
               adssettings.google.com
             </a>.
@@ -68,15 +63,11 @@ export default function PrivacyPolicyPage() {
           <p>
             We use a small localStorage key to remember your dark/light mode preference. We do not set any tracking cookies ourselves.
           </p>
-          <p>
-            <strong>AdSense ads are never shown to signed-in premium users</strong> (Standard, Pro, or Business plan).
-          </p>
 
           <h2>4. How We Use Your Information</h2>
           <ul>
             <li>To provide and improve the {APP_NAME} service</li>
-            <li>To authenticate you and manage your account and plan</li>
-            <li>To verify manual Payoneer payments and unlock premium features</li>
+            <li>To authenticate you and manage your account</li>
             <li>To understand aggregate usage patterns and improve the product</li>
             <li>To respond to your support requests</li>
           </ul>

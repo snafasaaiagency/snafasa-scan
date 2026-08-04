@@ -8,20 +8,12 @@ import { copyToClipboard } from "@/lib/utils";
 
 const FAQ = [
   {
-    q: "How long does payment verification take?",
-    a: "We typically review and approve payments within a few hours. In rare cases it may take up to 1 business day.",
-  },
-  {
-    q: "My payment was rejected — what do I do?",
-    a: `Email us at ${CONTACT_EMAIL} with your order reference code (SNF-XXXXXX) and your Payoneer transaction ID. We will investigate and resolve it within 24 hours.`,
-  },
-  {
-    q: "Can I get a refund?",
-    a: "We offer refunds within 7 days of purchase if the product did not work as advertised. See our Refund Policy for full details.",
+    q: "Is Snafasa Scan really 100% free?",
+    a: "Yes! Snafasa Scan is completely free to use. All 20+ OCR languages, image enhancement, Word/PDF/CSV exports, and cloud history are unlocked for all users with no payments or subscriptions.",
   },
   {
     q: "The OCR output is inaccurate — is that normal?",
-    a: "OCR accuracy depends heavily on image quality. For best results, use clear, well-lit images with legible text. Our premium tiers include advanced image enhancement to improve accuracy.",
+    a: "OCR accuracy depends heavily on image quality. For best results, use clear, well-lit images with legible text. You can also use our built-in image enhancement sliders before converting.",
   },
   {
     q: "Is my data safe?",
@@ -119,10 +111,10 @@ export default function ContactPage() {
                 1
               </div>
               <h3 className="font-semibold text-sm mb-1" style={{ color: "var(--color-text-primary)" }}>
-                Payment Issues
+                Feature Requests
               </h3>
               <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                Include your order reference code (e.g., <code className="font-mono">SNF-XXXXXX</code>) and Payoneer transaction ID.
+                Suggest new OCR languages, export formats, or feature enhancements.
               </p>
             </div>
 

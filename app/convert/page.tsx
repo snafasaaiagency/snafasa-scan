@@ -195,9 +195,8 @@ export default function ConvertPage() {
             <p className="text-sm mb-5 max-w-md mx-auto" style={{ color: "var(--color-text-secondary)" }}>
               You&apos;ve used your {FREE_TRIAL_CONVERSIONS} free trial conversions. Create a free account to keep converting — it only takes seconds.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex justify-center">
               <Link href="/account?tab=signup" className="btn btn-primary">Create free account</Link>
-              <Link href="/pricing" className="btn btn-outline">View premium plans</Link>
             </div>
           </div>
         )}
@@ -365,14 +364,8 @@ export default function ConvertPage() {
               </p>
               <div className="flex items-center justify-between mb-4">
                 <span className="badge badge-primary text-sm">
-                  {plan === "free" ? "Free" : plan.replace("tier", "Tier ")}
+                  100% Free Plan
                 </span>
-                {plan === "free" && (
-                  <Link href="/pricing" className="text-xs font-medium underline"
-                    style={{ color: "var(--color-primary-500)" }}>
-                    Upgrade
-                  </Link>
-                )}
               </div>
               <ul className="space-y-2 text-xs" style={{ color: "var(--color-text-secondary)" }}>
                 <li>✓ Max file size: {tierDef.maxFileSizeMb} MB</li>

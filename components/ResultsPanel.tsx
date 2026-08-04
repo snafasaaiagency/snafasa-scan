@@ -425,55 +425,39 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
           .csv
         </button>
 
-        {/* Export dropdown (premium) */}
-        {(tier.exportFormats.includes(".docx") ||
-          tier.exportFormats.includes(".pdf")) && (
-          <div className="relative">
-            <button
-              onClick={() => setExportOpen(!exportOpen)}
-              className="btn btn-outline btn-sm"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              Export
-              <ChevronDown className="h-3 w-3" />
-            </button>
+        {/* Export dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setExportOpen(!exportOpen)}
+            className="btn btn-outline btn-sm"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            Export
+            <ChevronDown className="h-3 w-3" />
+          </button>
 
-            {exportOpen && (
-              <div
-                className="absolute left-0 mt-2 w-44 card p-1 z-30 animate-scale-in"
-                style={{ boxShadow: "var(--shadow-lg)" }}
+          {exportOpen && (
+            <div
+              className="absolute left-0 mt-2 w-44 card p-1 z-30 animate-scale-in"
+              style={{ boxShadow: "var(--shadow-lg)" }}
+            >
+              <button
+                onClick={() => { handleDownloadDocx(); setExportOpen(false); }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm w-full text-left btn-ghost"
               >
-                {tier.exportFormats.includes(".docx") && (
-                  <button
-                    onClick={() => { handleDownloadDocx(); setExportOpen(false); }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm w-full text-left btn-ghost"
-                  >
-                    <FileType2 className="h-4 w-4" style={{ color: "var(--color-primary-500)" }} />
-                    Word (.docx)
-                  </button>
-                )}
-                {tier.exportFormats.includes(".pdf") && (
-                  <button
-                    onClick={() => { handleDownloadPdf(); setExportOpen(false); }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm w-full text-left btn-ghost"
-                  >
-                    <FileText className="h-4 w-4" style={{ color: "hsl(0,80%,50%)" }} />
-                    PDF (.pdf)
-                  </button>
-                )}
-                {tier.exportFormats.includes(".zip") && (
-                  <button
-                    onClick={() => setExportOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm w-full text-left btn-ghost"
-                  >
-                    <Archive className="h-4 w-4" style={{ color: "var(--color-accent-500)" }} />
-                    ZIP archive
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+                <FileType2 className="h-4 w-4" style={{ color: "var(--color-primary-500)" }} />
+                Word (.docx)
+              </button>
+              <button
+                onClick={() => { handleDownloadPdf(); setExportOpen(false); }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm w-full text-left btn-ghost"
+              >
+                <FileText className="h-4 w-4" style={{ color: "hsl(0,80%,50%)" }} />
+                PDF (.pdf)
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Share on Twitter */}
         <button

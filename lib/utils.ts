@@ -26,7 +26,7 @@ export function truncate(text: string, maxLength: number): string {
   return text.slice(0, maxLength).trimEnd() + "…";
 }
 
-// Generate unique Payoneer order reference code (e.g. SNF-A8K92F)
+// Generate unique reference code (e.g. SNF-A8K92F)
 export function generateReferenceCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "SNF-";

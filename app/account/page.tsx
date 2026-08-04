@@ -4,8 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import AuthModal from "@/components/AuthModal";
-import { PricingCard } from "@/components/PricingCard";
-import { TIERS, APP_NAME } from "@/lib/config";
+import { APP_NAME } from "@/lib/config";
 import {
   User,
   Mail,
@@ -14,6 +13,7 @@ import {
   History,
   Crown,
   LogOut,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { collection, query, where, getDocs, orderBy, Timestamp } from "firebase/firestore";
@@ -36,12 +36,12 @@ function AccountContent() {
   const [conversions, setConversions] = useState<ConversionRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // Load conversion history for premium users
+  // Load conversion history for registered users
   useEffect(() => {
     if (!user || !profile) return;
-    if (!profile.plan.startsWith("tier") || profile.plan === "tier1") return;
 
     let ignore = false;
+    setLoadingHistory(true);
     const load = async () => {
       try {
         const q = query(
@@ -90,9 +90,6 @@ function AccountContent() {
     );
   }
 
-  const currentTier = TIERS.find((t) => t.id === profile.plan);
-  const hasHistory = profile.plan === "tier2" || profile.plan === "tier3" || profile.plan === "tier4";
-
   return (
     <div className="min-h-screen pt-28 pb-20 px-4">
       <div className="mx-auto max-w-4xl">
@@ -119,7 +116,7 @@ function AccountContent() {
                 </div>
                 <div className="flex items-center gap-2" style={{ color: "var(--color-text-secondary)" }}>
                   <Star className="h-4 w-4" style={{ color: "var(--color-text-muted)" }} />
-                  {currentTier?.name ?? "Free"} plan
+                  100% Free Plan
                 </div>
                 {profile.role === "admin" && (
                   <div className="flex items-center gap-2" style={{ color: "var(--color-primary-500)" }}>
@@ -149,39 +146,24 @@ function AccountContent() {
           <div className="md:col-span-2 space-y-6">
             {/* Current plan */}
             <div className="card p-6">
-              <h3 className="font-bold text-lg mb-4" style={{ color: "var(--color-text-primary)" }}>
-                Current Plan
+              <h3 className="font-bold text-lg mb-3" style={{ color: "var(--color-text-primary)" }}>
+                Plan & Features
               </h3>
-              {currentTier && (
-                <PricingCard tier={currentTier} current />
-              )}
-              {profile.plan === "free" && (
-                <p className="text-sm mt-4" style={{ color: "var(--color-text-secondary)" }}>
-                  Upgrade to remove ads, get batch conversion, and more.{" "}
-                  <Link href="/pricing" className="underline" style={{ color: "var(--color-primary-500)" }}>
-                    See all plans →
-                  </Link>
+              <div className="p-4 rounded-xl mb-3" style={{ background: "var(--color-surface-2)", border: "1px solid var(--color-border)" }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-base" style={{ color: "var(--color-text-primary)" }}>
+                    Snafasa Scan Free Tier
+                  </span>
+                  <span className="badge badge-success">Unlimited Access</span>
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+                  You have full access to all features: 20+ OCR languages, image enhancement, Word/PDF/CSV exports, and cloud conversion history.
                 </p>
-              )}
+              </div>
             </div>
 
-            {/* Upgrade CTA for free/tier1 */}
-            {(profile.plan === "free" || profile.plan === "tier1") && (
-              <div className="card p-6"
-                style={{ background: "linear-gradient(135deg, var(--color-primary-600), var(--color-primary-800))" }}>
-                <h3 className="font-bold text-lg text-white mb-2">Unlock more features</h3>
-                <p className="text-sm text-white/80 mb-4">
-                  Get batch conversion, cloud history, and advanced OCR enhancement — one-time payment.
-                </p>
-                <Link href="/pricing" className="btn btn-accent btn-sm">
-                  View upgrade options →
-                </Link>
-              </div>
-            )}
-
             {/* Conversion history */}
-            {hasHistory && (
-              <div className="card p-6">
+            <div className="card p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-lg" style={{ color: "var(--color-text-primary)" }}>
                     Conversion History
@@ -227,7 +209,6 @@ function AccountContent() {
                   </div>
                 )}
               </div>
-            )}
           </div>
         </div>
       </div>

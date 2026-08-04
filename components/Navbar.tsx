@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { href: "/convert", label: "Convert" },
-  { href: "/pricing", label: "Pricing" },
   { href: "/blog", label: "Blog" },
 ];
 
@@ -134,7 +133,7 @@ export default function Navbar() {
                     <p className="text-xs font-medium" style={{ color: "var(--color-text-muted)" }}>Signed in as</p>
                     <p className="text-sm font-semibold truncate" style={{ color: "var(--color-text-primary)" }}>{profile.email}</p>
                     <span className="badge badge-primary mt-1">
-                      {profile.plan === "free" ? "Free" : profile.plan.replace("tier", "Tier ")}
+                      Free Plan
                     </span>
                   </div>
                   <Link href="/account" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors btn-ghost w-full text-left mt-1" onClick={() => setUserMenuOpen(false)}>

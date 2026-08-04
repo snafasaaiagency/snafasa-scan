@@ -30,15 +30,12 @@ export default function TermsPage() {
           <p>
             {APP_NAME} is a browser-based optical character recognition (OCR) tool that extracts text from
             images. All image processing occurs locally in your browser via WebAssembly (Tesseract.js). No image data
-            is transmitted to our servers. We provide free and premium tiers with different features as described on
-            the pricing page.
+            is transmitted to our servers. {APP_NAME} is 100% free to use with all features unlocked.
           </p>
 
           <h2>2. Accounts</h2>
           <p>
-            You may use the free tier for up to three conversions without an account. To access more conversions or
-            premium features, you must create an account with a valid email address. You are responsible for
-            maintaining the security of your account credentials and for all activity under your account.
+            You may use {APP_NAME} without an account for instant conversions. To save your conversion history across devices, you can create a free account with a valid email address. You are responsible for maintaining the security of your account credentials.
           </p>
 
           <h2>3. Acceptable Use</h2>
@@ -46,30 +43,12 @@ export default function TermsPage() {
           <ul>
             <li>Process images that contain illegal content</li>
             <li>Attempt to reverse-engineer, scrape, or abuse the service infrastructure</li>
-            <li>Create multiple accounts to circumvent free-tier limits</li>
             <li>Impersonate any person or entity</li>
             <li>Violate any applicable laws or regulations</li>
           </ul>
           <p>
             Since OCR processing occurs entirely in your browser, the content of your images is not accessible to
             us. You are solely responsible for the images you process and the text you extract.
-          </p>
-
-          <h2>4. Premium Plans — Payments and Billing</h2>
-          <p>
-            All premium tiers are <strong>one-time, lifetime purchases</strong>. There are no recurring charges or
-            automatic renewals. Payment is processed manually via Payoneer. Your plan is activated after manual
-            verification of your payment by our admin team, which typically takes a few hours to one business day.
-          </p>
-          <p>
-            Because payment verification is manual, we cannot guarantee instant activation. If your payment cannot
-            be verified within 5 business days, please contact us at{" "}
-            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
-          </p>
-          <p>
-            Plan features are as described on the pricing page at the time of purchase. We reserve the right to
-            modify features for future purchasers, but existing lifetime purchasers retain the features they paid
-            for.
           </p>
 
           <h2>5. OCR Accuracy Disclaimer</h2>

@@ -8,7 +8,6 @@ import { APP_NAME, AGENCY_NAME } from "@/lib/config";
 const FOOTER_LINKS = {
   Product: [
     { href: "/convert", label: "Convert Image" },
-    { href: "/pricing", label: "Pricing" },
     { href: "/blog", label: "Blog & Guides" },
   ],
   Tools: [

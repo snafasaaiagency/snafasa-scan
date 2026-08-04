@@ -1,3 +1,2 @@
 // Firebase Storage is NOT used in SnafasaScan.
 // All OCR runs client-side via WebAssembly (Tesseract.js).
-// Payment verification uses Payoneer Transaction ID reference codes stored directly in Cloud Firestore.

@@ -50,7 +50,7 @@ Unlike traditional OCR web tools that upload user files to external servers or p
 | 📄 **Multi-Format Export** | Download extracted text cleanly as `.txt`, `.docx`, `.pdf`, or `.csv` files with a single click. |
 | 📷 **Camera Capture & Drag-and-Drop** | Upload files via drag-and-drop, clipboard paste (`Ctrl+V`), or live webcam capture. |
 | 🌙 **Dark Mode Included** | Built-in sleek dark mode toggle with smooth CSS variable token system. |
-| 💎 **Tiered Lifetime Access** | One-time lifetime upgrades via Payoneer with automated real-time status updates. |
+| 💎 **100% Free Unlimited Access** | All features, languages, export formats, and tools are 100% free with no paid plans or subscriptions. |
 
 ---
 
