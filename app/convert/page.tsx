@@ -23,11 +23,9 @@ import { useAuth } from "@/lib/auth-context";
 import { extractText, type OcrResult } from "@/lib/ocr";
 import {
   FREE_LANGUAGES,
-  PREMIUM_LANGUAGES,
-  FREE_TRIAL_CONVERSIONS,
   getTierDef,
 } from "@/lib/config";
-import { getTrialCount, incrementTrialCount, formatBytes } from "@/lib/utils";
+import { formatBytes } from "@/lib/utils";
 
 type ConvertState = "idle" | "processing" | "done" | "error";
 
@@ -48,30 +46,15 @@ export default function ConvertPage() {
   const [result, setResult] = useState<OcrResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Free trial gate
-  const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
+  const languages = FREE_LANGUAGES;
 
-  const languages =
-    plan === "free" ? FREE_LANGUAGES : PREMIUM_LANGUAGES;
-
-  const handleFile = useCallback(
-    (f: File) => {
-      // Check free trial limit for unauthenticated users
-      if (!user) {
-        const count = getTrialCount();
-        if (count >= FREE_TRIAL_CONVERSIONS) {
-          setShowSignUpPrompt(true);
-          return;
-        }
-      }
-      setFile(f);
-      setPreview(URL.createObjectURL(f));
-      setState("idle");
-      setResult(null);
-      setError(null);
-    },
-    [user]
-  );
+  const handleFile = useCallback((f: File) => {
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
+    setState("idle");
+    setResult(null);
+    setError(null);
+  }, []);
 
   const handleExtract = useCallback(async () => {
     if (!file) return;
@@ -100,33 +83,13 @@ export default function ConvertPage() {
         charCount: (ocrResult.formattedText || ocrResult.text).length,
         confidence: ocrResult.confidence,
       });
-
-      // Increment trial count for anonymous users
-      if (!user) {
-        const newCount = incrementTrialCount();
-        if (newCount >= FREE_TRIAL_CONVERSIONS) {
-          toast.custom((t) => (
-            <div className={`card p-4 max-w-sm ${t.visible ? "animate-fade-in" : "opacity-0"}`}>
-              <p className="font-semibold text-sm mb-1" style={{ color: "var(--color-text-primary)" }}>
-                That&apos;s your {FREE_TRIAL_CONVERSIONS} free conversions!
-              </p>
-              <p className="text-sm mb-3" style={{ color: "var(--color-text-secondary)" }}>
-                Create a free account to keep converting.
-              </p>
-              <Link href="/account?tab=signup" className="btn btn-primary btn-sm w-full">
-                Create free account
-              </Link>
-            </div>
-          ), { duration: 8000 });
-        }
-      }
     } catch (err) {
       setState("error");
       setError(
         (err as Error).message || "OCR failed. Please try a different image."
       );
     }
-  }, [file, language, tierDef.advancedEnhance, user]);
+  }, [file, language, tierDef.advancedEnhance]);
 
   // Keep result text ref in sync for keyboard shortcut
   useEffect(() => {
@@ -158,8 +121,6 @@ export default function ConvertPage() {
     setProgress(0);
   };
 
-  const showAd = plan === "free";
-
   return (
     <div className="min-h-screen pt-36 sm:pt-40 pb-20 px-4">
       <div className="mx-auto max-w-5xl">
@@ -169,47 +130,18 @@ export default function ConvertPage() {
             Image to Text Converter
           </h1>
           <p className="text-lg" style={{ color: "var(--color-text-secondary)" }}>
-            Upload any image — your text is extracted privately in your browser.
+            Upload any image — 100% free, unlimited, private in your browser.
           </p>
-          {!user && (
-            <p className="text-sm mt-2" style={{ color: "var(--color-text-muted)" }}>
-              {Math.max(0, FREE_TRIAL_CONVERSIONS - getTrialCount())} free trial conversion(s) remaining ·{" "}
-              <Link href="/account" className="underline" style={{ color: "var(--color-primary-500)" }}>
-                Sign up to unlock more
-              </Link>
-            </p>
-          )}
         </div>
-
-        {/* Sign-up prompt overlay */}
-        {showSignUpPrompt && (
-          <div className="card p-8 text-center mb-8 animate-scale-in"
-            style={{ border: "2px solid var(--color-primary-300)", background: "var(--color-primary-50)" }}>
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl mx-auto mb-4"
-              style={{ background: "var(--color-primary-100)" }}>
-              <AlertCircle className="h-7 w-7" style={{ color: "var(--color-primary-500)" }} />
-            </div>
-            <h2 className="text-xl font-bold mb-2" style={{ color: "var(--color-text-primary)" }}>
-              Free trial limit reached
-            </h2>
-            <p className="text-sm mb-5 max-w-md mx-auto" style={{ color: "var(--color-text-secondary)" }}>
-              You&apos;ve used your {FREE_TRIAL_CONVERSIONS} free trial conversions. Create a free account to keep converting — it only takes seconds.
-            </p>
-            <div className="flex justify-center">
-              <Link href="/account?tab=signup" className="btn btn-primary">Create free account</Link>
-            </div>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Upload + controls */}
           <div className="lg:col-span-2 space-y-5">
             {/* Upload zone (hidden when file is loaded) */}
-            {!file && !showSignUpPrompt && (
+            {!file && (
               <UploadZone
                 onFile={handleFile}
                 maxSizeMb={tierDef.maxFileSizeMb}
-                disabled={showSignUpPrompt}
               />
             )}
 
@@ -347,14 +279,12 @@ export default function ConvertPage() {
 
           {/* Right: Sidebar */}
           <div className="space-y-5">
-            {/* Ad slot — free users only */}
-            {showAd && (
-              <AdSlot
-                slotId="1234567890"
-                format="rectangle"
-                className="w-full"
-              />
-            )}
+            {/* Ad slot */}
+            <AdSlot
+              slotId="1234567890"
+              format="rectangle"
+              className="w-full"
+            />
 
             {/* Plan info card */}
             <div className="card p-5">
