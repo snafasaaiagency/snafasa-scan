@@ -11,6 +11,14 @@ export const metadata: Metadata = {
 
 export const BLOG_POSTS = [
   {
+    slug: "ultimate-guide-in-browser-wasm-ocr-privacy",
+    title: "The Ultimate Guide to In-Browser WASM OCR: Document Privacy in 2026",
+    excerpt: "Discover how client-side WebAssembly (WASM) Optical Character Recognition protects confidential documents while extracting text instantly for free.",
+    date: "August 9, 2026",
+    readTime: "7 min read (1,250 words)",
+    category: "Privacy & Tech",
+  },
+  {
     slug: "ocr-for-students-study-tips",
     title: "OCR for Students: 5 Ways to Study Smarter in 2025",
     excerpt: "Discover how students use free OCR tools to digitize textbook pages, handwritten notes, and lecture slides — and save hours every week.",

@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/terms-of-service",
     "/refund-policy",
     "/blog",
+    "/blog/ultimate-guide-in-browser-wasm-ocr-privacy",
     "/blog/how-to-extract-text-from-scanned-pdf",
     "/blog/ocr-best-practices-document-photography",
     "/blog/free-vs-paid-ocr-tools-comparison",
