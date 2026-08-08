@@ -12,7 +12,7 @@
   </p>
 
   <p>
-    <a href="https://snafasascan.com"><strong>Explore Live App »</strong></a>
+    <a href="https://snafasa-scan.vercel.app"><strong style="color: #00f2fe;">Explore Live App »</strong></a>
     ·
     <a href="#-key-features">Features</a>
     ·

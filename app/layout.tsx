@@ -4,10 +4,10 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { APP_NAME, APP_TAGLINE } from "@/lib/config";
+import { APP_NAME, APP_TAGLINE, getBaseUrl } from "@/lib/config";
 import { Toaster } from "react-hot-toast";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://snafasascan.com";
+const BASE_URL = getBaseUrl();
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
 
 export const metadata: Metadata = {

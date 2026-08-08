@@ -10,6 +10,23 @@ export const AGENCY_WEBSITE = "https://snafasa.com";
 
 export const CONTACT_EMAIL = "snafasaaiagency@gmail.com";
 
+export function getBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    let url = process.env.NEXT_PUBLIC_BASE_URL.trim();
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = `https://${url}`;
+    }
+    return url.replace(/\/$/, "");
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL.replace(/\/$/, "")}`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL.replace(/\/$/, "")}`;
+  }
+  return "https://snafasa-scan.vercel.app";
+}
+
 // Free trial threshold for unauthenticated users before prompting sign-up
 export const FREE_TRIAL_CONVERSIONS = 3;
 

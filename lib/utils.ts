@@ -144,3 +144,37 @@ export function incrementTrialCount(): number {
   localStorage.setItem(TRIAL_KEY, String(next));
   return next;
 }
+
+// Export batch results as ZIP archive
+export async function exportBatchAsZip(
+  items: { fileName: string; text: string; formattedText?: string }[],
+  zipFilename: string
+): Promise<void> {
+  const JSZip = (await import("jszip")).default;
+  const zip = new JSZip();
+
+  const combinedLines: string[] = [];
+  items.forEach((item, index) => {
+    const rawName = item.fileName.replace(/\.[^/.]+$/, "");
+    const safeName = `image_${index + 1}_${rawName}.txt`;
+    const content = item.formattedText || item.text;
+    zip.file(safeName, content);
+
+    combinedLines.push(`========================================`);
+    combinedLines.push(`IMAGE ${index + 1}: ${item.fileName}`);
+    combinedLines.push(`========================================\n`);
+    combinedLines.push(content);
+    combinedLines.push("\n\n");
+  });
+
+  zip.file("00_ALL_IMAGES_COMBINED.txt", combinedLines.join("\n"));
+
+  const blob = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${zipFilename}.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+

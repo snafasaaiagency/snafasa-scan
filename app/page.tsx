@@ -28,8 +28,8 @@ export const metadata: Metadata = {
 const HOW_IT_WORKS = [
   {
     icon: <Upload className="h-7 w-7" />,
-    title: "Upload your image",
-    desc: "Drag & drop, click to browse, paste from clipboard, or take a photo on mobile. JPG, PNG, WebP, TIFF, BMP all supported.",
+    title: "Upload 1 or multiple images",
+    desc: "Drag & drop, click to browse, paste from clipboard, or take a photo on mobile. Select multiple images at once to batch convert all files into text instantly.",
   },
   {
     icon: <Cpu className="h-7 w-7" />,

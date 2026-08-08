@@ -18,14 +18,20 @@ import {
   Code2,
   BookOpen,
 } from "lucide-react";
-import { cn, copyToClipboard, downloadTextFile, exportAsDocx, exportAsPdf, exportAsCsv, timestampedFilename, formatMs } from "@/lib/utils";
+import { cn, copyToClipboard, downloadTextFile, exportAsDocx, exportAsPdf, exportAsCsv, exportBatchAsZip, timestampedFilename, formatMs } from "@/lib/utils";
 import type { OcrResult } from "@/lib/ocr";
 import type { PlanId } from "@/lib/config";
 import { getTierDef } from "@/lib/config";
 
-interface ResultsPanelProps {
-  result: OcrResult;
+export interface BatchResultItem {
   fileName: string;
+  result: OcrResult;
+}
+
+interface ResultsPanelProps {
+  result?: OcrResult;
+  fileName?: string;
+  batchResults?: BatchResultItem[];
   plan: PlanId;
   onReset: () => void;
 }
@@ -58,7 +64,6 @@ function toMarkdown(text: string): string {
     .map((line) => {
       const trimmed = line.trim();
       if (!trimmed) return "";
-      // Heuristic: short ALL-CAPS lines → heading
       if (trimmed.length < 60 && trimmed === trimmed.toUpperCase() && trimmed.length > 3) {
         return `## ${trimmed}`;
       }
@@ -99,7 +104,6 @@ function triggerConfetti() {
     `;
     container.appendChild(el);
   }
-  // Inject keyframes if not present
   if (!document.getElementById("confetti-style")) {
     const style = document.createElement("style");
     style.id = "confetti-style";
@@ -112,19 +116,83 @@ function triggerConfetti() {
   setTimeout(() => container.remove(), 3500);
 }
 
-export default function ResultsPanel({ result, fileName, plan, onReset }: ResultsPanelProps) {
+export default function ResultsPanel({ result, fileName, batchResults, plan, onReset }: ResultsPanelProps) {
+  // Build normalized list of items
+  const items: BatchResultItem[] = batchResults && batchResults.length > 0
+    ? batchResults
+    : result && fileName
+    ? [{ fileName, result }]
+    : [];
+
+  const isBatch = items.length > 1;
+
+  // Active item tab: -1 for Combined View (when batch), or 0..N-1
+  const [activeTab, setActiveTab] = useState<number>(isBatch ? -1 : 0);
   const [copied, setCopied] = useState(false);
   const [copiedMd, setCopiedMd] = useState(false);
   const [copiedHtml, setCopiedHtml] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>(
-    result.tableData.isTable && result.tableData.rows.length > 0 ? "table" : "formatted"
-  );
-  const [editableText, setEditableText] = useState(result.formattedText || result.text);
-  const [tableRows, setTableRows] = useState<string[][]>(result.tableData.rows || []);
   const [exportOpen, setExportOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const tier = getTierDef(plan);
-  const baseName = timestampedFilename(fileName ? fileName.replace(/\.[^.]+$/, "") : "snafasascan_result");
+
+  // Active current result / text
+  const currentItem = activeTab >= 0 ? items[activeTab] : null;
+  
+  // Helper to generate combined text for batch
+  const generateCombinedText = useCallback(() => {
+    return items
+      .map(
+        (item, idx) =>
+          `========================================\n` +
+          `IMAGE ${idx + 1}: ${item.fileName}\n` +
+          `========================================\n\n` +
+          (item.result.formattedText || item.result.text)
+      )
+      .join("\n\n");
+  }, [items]);
+
+  const [editableText, setEditableText] = useState<string>(() => {
+    if (activeTab === -1 && isBatch) {
+      return generateCombinedText();
+    }
+    const currentRes = items[activeTab > -1 ? activeTab : 0]?.result;
+    return currentRes?.formattedText || currentRes?.text || "";
+  });
+
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const currentRes = items[activeTab > -1 ? activeTab : 0]?.result;
+    return currentRes?.tableData?.isTable && currentRes.tableData.rows.length > 0 ? "table" : "formatted";
+  });
+
+  const [tableRows, setTableRows] = useState<string[][]>(() => {
+    const currentRes = items[activeTab > -1 ? activeTab : 0]?.result;
+    return currentRes?.tableData?.rows || [];
+  });
+
+  // When active tab changes, update text and table state
+  useEffect(() => {
+    if (activeTab === -1 && isBatch) {
+      setEditableText(generateCombinedText());
+      setTableRows([]);
+      setViewMode("formatted");
+    } else if (items[activeTab]) {
+      const res = items[activeTab].result;
+      setEditableText(res.formattedText || res.text);
+      setTableRows(res.tableData?.rows || []);
+      if (res.tableData?.isTable && res.tableData.rows.length > 0) {
+        setViewMode("table");
+      } else {
+        setViewMode("formatted");
+      }
+    }
+  }, [activeTab, isBatch, items, generateCombinedText]);
+
+  const baseName = timestampedFilename(
+    isBatch
+      ? "snafasascan_batch"
+      : items[0]?.fileName
+      ? items[0].fileName.replace(/\.[^.]+$/, "")
+      : "snafasascan_result"
+  );
 
   const wordCount = editableText.trim() ? editableText.trim().split(/\s+/).length : 0;
   const charCount = editableText.length;
@@ -132,7 +200,16 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
   const hasTable = tableRows.length > 0;
   const detectedLang = detectLanguage(editableText);
 
-  // Confetti on first successful conversion
+  // Confidence & Ms calculations
+  const confidence = activeTab === -1 && isBatch
+    ? Math.round(items.reduce((acc, i) => acc + i.result.confidence, 0) / items.length)
+    : currentItem?.result.confidence ?? items[0]?.result.confidence ?? 100;
+
+  const totalMs = activeTab === -1 && isBatch
+    ? items.reduce((acc, i) => acc + i.result.processingMs, 0)
+    : currentItem?.result.processingMs ?? items[0]?.result.processingMs ?? 0;
+
+  // Confetti on first conversion
   useEffect(() => {
     const CONFETTI_KEY = "snafasa_confetti_done";
     if (!localStorage.getItem(CONFETTI_KEY)) {
@@ -175,7 +252,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
 
   const handleShareTwitter = () => {
     const text = encodeURIComponent(
-      `Just extracted ${wordCount} words from an image using Snafasa Scan — free online OCR that works 100% in your browser! 🔍\n\nhttps://snafasascan.com`
+      `Just extracted ${wordCount} words from ${items.length} image(s) using Snafasa Scan — free online OCR that works 100% in your browser! 🔍\n\nhttps://snafasa-scan.vercel.app`
     );
     window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank", "noopener,noreferrer,width=600,height=450");
   };
@@ -192,6 +269,17 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
     } else {
       exportAsCsv(editableText, baseName);
     }
+  };
+
+  const handleDownloadZip = async () => {
+    await exportBatchAsZip(
+      items.map((i) => ({
+        fileName: i.fileName,
+        text: i.result.text,
+        formattedText: i.result.formattedText,
+      })),
+      baseName
+    );
   };
 
   const handleTableCellChange = (rIdx: number, cIdx: number, val: string) => {
@@ -221,9 +309,13 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
           </div>
           <div>
             <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              {hasTable ? "Table & Layout Extracted" : "Text Extracted Successfully"}
+              {isBatch
+                ? `${items.length} Images Converted Successfully`
+                : hasTable
+                ? "Table & Layout Extracted"
+                : "Text Extracted Successfully"}
             </p>
-            <p className="text-xs flex items-center gap-2" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-xs flex flex-wrap items-center gap-2" style={{ color: "var(--color-text-muted)" }}>
               <span>{wordCount} words · {charCount} chars</span>
               <span className="flex items-center gap-1">
                 <BookOpen className="h-3 w-3" />
@@ -241,24 +333,70 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
         <div className="flex items-center gap-2">
           {/* Confidence badge */}
           <span
-            className={cn("badge text-xs", result.confidence >= 80 ? "badge-success" : result.confidence >= 60 ? "badge-warning" : "badge-error")}
+            className={cn(
+              "badge text-xs",
+              confidence >= 80 ? "badge-success" : confidence >= 60 ? "badge-warning" : "badge-error"
+            )}
           >
             <Zap className="h-2.5 w-2.5" />
-            {result.confidence}% confidence
+            {confidence}% {isBatch && activeTab === -1 ? "avg confidence" : "confidence"}
           </span>
           <span className="badge badge-muted text-xs">
-            {formatMs(result.processingMs)}
+            {formatMs(totalMs)}
           </span>
         </div>
       </div>
 
-      {/* View Mode Tabs */}
+      {/* Batch Image Selection Tabs (if multiple images uploaded) */}
+      {isBatch && (
+        <div
+          className="flex items-center gap-1.5 px-5 py-2.5 border-b overflow-x-auto text-xs scrollbar-none"
+          style={{ borderColor: "var(--color-border)", background: "var(--color-surface-3)" }}
+        >
+          <span className="font-semibold text-muted-foreground mr-1 shrink-0" style={{ color: "var(--color-text-muted)" }}>
+            Select View:
+          </span>
+          <button
+            type="button"
+            onClick={() => setActiveTab(-1)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-bold shrink-0"
+            style={{
+              background: activeTab === -1 ? "var(--color-primary-500)" : "var(--color-surface)",
+              color: activeTab === -1 ? "#ffffff" : "var(--color-text-primary)",
+              border: activeTab === -1 ? "1px solid var(--color-primary-600)" : "1px solid var(--color-border)",
+            }}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            Combined View ({items.length} Images)
+          </button>
+
+          {items.map((item, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setActiveTab(idx)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-semibold shrink-0 truncate max-w-44"
+              style={{
+                background: activeTab === idx ? "var(--color-primary-500)" : "var(--color-surface)",
+                color: activeTab === idx ? "#ffffff" : "var(--color-text-primary)",
+                border: activeTab === idx ? "1px solid var(--color-primary-600)" : "1px solid var(--color-border)",
+              }}
+              title={item.fileName}
+            >
+              <span>#{idx + 1}</span>
+              <span className="truncate">{item.fileName}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* View Mode Tabs (Formatted / Table / Plain) */}
       <div
         className="flex flex-wrap items-center gap-2 px-5 py-3 border-b text-xs font-medium"
         style={{ borderColor: "var(--color-border)", background: "var(--color-surface-1)" }}
       >
         <span style={{ color: "var(--color-text-muted)" }} className="mr-1 font-semibold">
-          View Mode:
+          Format:
         </span>
 
         {hasTable && (
@@ -279,7 +417,11 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
 
         <button
           type="button"
-          onClick={() => { setViewMode("formatted"); setEditableText(result.formattedText || result.text); }}
+          onClick={() => {
+            setViewMode("formatted");
+            if (activeTab === -1 && isBatch) setEditableText(generateCombinedText());
+            else if (currentItem) setEditableText(currentItem.result.formattedText || currentItem.result.text);
+          }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-semibold"
           style={{
             background: viewMode === "formatted" ? "var(--color-primary-500)" : "var(--color-surface-3)",
@@ -293,7 +435,11 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
 
         <button
           type="button"
-          onClick={() => { setViewMode("raw"); setEditableText(result.text); }}
+          onClick={() => {
+            setViewMode("raw");
+            if (activeTab === -1 && isBatch) setEditableText(generateCombinedText());
+            else if (currentItem) setEditableText(currentItem.result.text);
+          }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-semibold"
           style={{
             background: viewMode === "raw" ? "var(--color-primary-500)" : "var(--color-surface-3)",
@@ -355,7 +501,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
               style={{
                 background: "var(--color-surface-2)",
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                whiteSpace: "pre",
+                whiteSpace: "pre-wrap",
               }}
             />
           </div>
@@ -384,7 +530,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
           {copied ? (
             <><CheckCircle2 className="h-3.5 w-3.5" /> Copied!</>
           ) : (
-            <><Copy className="h-3.5 w-3.5" /> {viewMode === "table" ? "Copy CSV" : "Copy Text"}</>
+            <><Copy className="h-3.5 w-3.5" /> {isBatch && activeTab === -1 ? "Copy All Text" : viewMode === "table" ? "Copy CSV" : "Copy Text"}</>
           )}
         </button>
 
@@ -438,7 +584,7 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
 
           {exportOpen && (
             <div
-              className="absolute left-0 mt-2 w-44 card p-1 z-30 animate-scale-in"
+              className="absolute left-0 mt-2 w-48 card p-1 z-30 animate-scale-in"
               style={{ boxShadow: "var(--shadow-lg)" }}
             >
               <button
@@ -455,9 +601,26 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
                 <FileText className="h-4 w-4" style={{ color: "hsl(0,80%,50%)" }} />
                 PDF (.pdf)
               </button>
+              {isBatch && (
+                <button
+                  onClick={() => { handleDownloadZip(); setExportOpen(false); }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm w-full text-left btn-ghost font-semibold border-t mt-1 pt-2"
+                  style={{ borderColor: "var(--color-border)", color: "var(--color-primary-600)" }}
+                >
+                  <Archive className="h-4 w-4" />
+                  Download ZIP Archive
+                </button>
+              )}
             </div>
           )}
         </div>
+
+        {/* If batch, direct ZIP button */}
+        {isBatch && (
+          <button onClick={handleDownloadZip} className="btn btn-outline btn-sm" style={{ color: "var(--color-primary-600)", borderColor: "var(--color-primary-300)" }}>
+            <Archive className="h-3.5 w-3.5" /> Download ZIP
+          </button>
+        )}
 
         {/* Share on Twitter */}
         <button
@@ -475,9 +638,10 @@ export default function ResultsPanel({ result, fileName, plan, onReset }: Result
         {/* Convert another */}
         <button onClick={onReset} className="btn btn-ghost btn-sm">
           <RefreshCw className="h-3.5 w-3.5" />
-          Convert another
+          Convert more
         </button>
       </div>
     </div>
   );
 }
+

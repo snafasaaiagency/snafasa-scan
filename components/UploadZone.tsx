@@ -5,10 +5,12 @@ import { Upload, Image as ImageIcon, Camera, Clipboard, X, Keyboard, SunMedium, 
 import { cn, formatBytes } from "@/lib/utils";
 
 interface UploadZoneProps {
-  onFile: (file: File) => void;
+  onFiles?: (files: File[]) => void;
+  onFile?: (file: File) => void;
   disabled?: boolean;
   accept?: string;
   maxSizeMb?: number;
+  multiple?: boolean;
   className?: string;
 }
 
@@ -68,10 +70,12 @@ function applyEnhancements(file: File, settings: EnhancementSettings): Promise<F
 }
 
 export default function UploadZone({
+  onFiles,
   onFile,
   disabled = false,
   accept = "image/*",
-  maxSizeMb = 5,
+  maxSizeMb = 500,
+  multiple = true,
   className,
 }: UploadZoneProps) {
   const [dragging, setDragging] = useState(false);
@@ -87,25 +91,50 @@ export default function UploadZone({
     return () => { if (preview) URL.revokeObjectURL(preview); };
   }, [preview]);
 
-  const processFile = useCallback(
-    (file: File) => {
-      setError(null);
-      if (!file.type.startsWith("image/")) {
-        setError("Please upload an image file (JPG, PNG, WebP, TIFF, BMP).");
-        return;
+  const emitFiles = useCallback(
+    (files: File[]) => {
+      if (files.length === 0) return;
+      if (onFiles) {
+        onFiles(files);
+      } else if (onFile) {
+        onFile(files[0]);
       }
-      const maxBytes = maxSizeMb * 1024 * 1024;
-      if (file.size > maxBytes) {
-        setError(`File too large. Maximum allowed size is ${maxSizeMb} MB. Your file is ${formatBytes(file.size)}.`);
-        return;
-      }
-      // Show enhancement UI
-      const url = URL.createObjectURL(file);
-      setPreview(url);
-      setPendingFile(file);
-      setSettings(DEFAULT_SETTINGS);
     },
-    [maxSizeMb]
+    [onFiles, onFile]
+  );
+
+  const processFileList = useCallback(
+    (fileList: FileList | File[]) => {
+      setError(null);
+      const rawFiles = Array.from(fileList);
+      const validFiles: File[] = [];
+      const maxBytes = maxSizeMb * 1024 * 1024;
+
+      for (const f of rawFiles) {
+        if (!f.type.startsWith("image/")) {
+          setError(`"${f.name}" is not a supported image file (JPG, PNG, WebP, TIFF, BMP).`);
+          return;
+        }
+        if (f.size > maxBytes) {
+          setError(`"${f.name}" is too large. Maximum allowed size is ${maxSizeMb} MB.`);
+          return;
+        }
+        validFiles.push(f);
+      }
+
+      if (validFiles.length === 0) return;
+
+      // If single file and single mode requested, allow single file enhancement preview
+      if (validFiles.length === 1 && !onFiles && onFile) {
+        const url = URL.createObjectURL(validFiles[0]);
+        setPreview(url);
+        setPendingFile(validFiles[0]);
+        setSettings(DEFAULT_SETTINGS);
+      } else {
+        emitFiles(validFiles);
+      }
+    },
+    [maxSizeMb, emitFiles, onFiles, onFile]
   );
 
   const handleConfirmEnhancement = useCallback(async () => {
@@ -114,13 +143,13 @@ export default function UploadZone({
       settings.brightness !== 100 || settings.contrast !== 100 || settings.sharpness !== 0;
     if (needsProcessing) {
       const enhanced = await applyEnhancements(pendingFile, settings);
-      onFile(enhanced);
+      emitFiles([enhanced]);
     } else {
-      onFile(pendingFile);
+      emitFiles([pendingFile]);
     }
     setPreview(null);
     setPendingFile(null);
-  }, [pendingFile, settings, onFile]);
+  }, [pendingFile, settings, emitFiles]);
 
   const handleCancelEnhancement = () => {
     if (preview) URL.revokeObjectURL(preview);
@@ -135,8 +164,9 @@ export default function UploadZone({
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault(); setDragging(false);
     if (disabled) return;
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
+    if (e.dataTransfer.files?.length) {
+      processFileList(e.dataTransfer.files);
+    }
   };
 
   // Paste handler (Ctrl+V)
@@ -144,23 +174,28 @@ export default function UploadZone({
     (e: React.ClipboardEvent) => {
       if (disabled) return;
       const items = Array.from(e.clipboardData.items);
-      const imageItem = items.find((item) => item.type.startsWith("image/"));
-      if (imageItem) {
-        const file = imageItem.getAsFile();
-        if (file) processFile(file);
+      const imageItems = items.filter((item) => item.type.startsWith("image/"));
+      const files: File[] = [];
+      for (const item of imageItems) {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
+      if (files.length > 0) {
+        processFileList(files);
       }
     },
-    [disabled, processFile]
+    [disabled, processFileList]
   );
 
   const onClick = () => { if (!disabled && !pendingFile) inputRef.current?.click(); };
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processFile(file);
+    if (e.target.files?.length) {
+      processFileList(e.target.files);
+    }
     e.target.value = "";
   };
 
-  // ── Enhancement UI (shown after file selected) ──────────────
+  // ── Enhancement UI (shown after file selected in single-file mode) ──────────────
   if (pendingFile && preview) {
     return (
       <div className={cn("w-full", className)}>
@@ -295,10 +330,10 @@ export default function UploadZone({
           className="text-lg font-semibold mb-1"
           style={{ color: dragging ? "var(--color-primary-500)" : "var(--color-text-primary)" }}
         >
-          {dragging ? "Drop your image here" : "Drag & drop an image"}
+          {dragging ? "Drop your images here" : "Drag & drop your images"}
         </p>
         <p className="text-sm mb-5" style={{ color: "var(--color-text-muted)" }}>
-          or click to browse · paste with Ctrl+V
+          {multiple ? "or click to browse · upload 1 or multiple images at once · paste with Ctrl+V" : "or click to browse · paste with Ctrl+V"}
         </p>
 
         {/* Action chips */}
@@ -308,8 +343,17 @@ export default function UploadZone({
             style={{ borderColor: "var(--color-border)", color: "var(--color-text-secondary)", background: "var(--color-surface)" }}
           >
             <ImageIcon className="h-3 w-3" />
-            JPG, PNG, WebP, TIFF
+            JPG, PNG, WebP, TIFF, BMP
           </span>
+
+          {multiple && (
+            <span
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border"
+              style={{ borderColor: "var(--color-primary-300)", color: "var(--color-primary-600)", background: "var(--color-primary-50)" }}
+            >
+              ✨ Batch Upload Enabled
+            </span>
+          )}
 
           {/* Mobile camera — more prominent */}
           <label
@@ -350,15 +394,15 @@ export default function UploadZone({
         {showShortcuts && (
           <div className="mt-3 p-3 rounded-xl text-xs text-left grid grid-cols-2 gap-x-6 gap-y-1.5"
             style={{ background: "var(--color-surface-3)", color: "var(--color-text-secondary)" }}>
-            <span><kbd className="px-1.5 py-0.5 rounded font-mono text-xs border" style={{ borderColor: "var(--color-border)" }}>Ctrl+V</kbd> Paste image</span>
+            <span><kbd className="px-1.5 py-0.5 rounded font-mono text-xs border" style={{ borderColor: "var(--color-border)" }}>Ctrl+V</kbd> Paste images</span>
             <span><kbd className="px-1.5 py-0.5 rounded font-mono text-xs border" style={{ borderColor: "var(--color-border)" }}>Ctrl+Enter</kbd> Run OCR</span>
             <span><kbd className="px-1.5 py-0.5 rounded font-mono text-xs border" style={{ borderColor: "var(--color-border)" }}>Ctrl+C</kbd> Copy result</span>
-            <span><kbd className="px-1.5 py-0.5 rounded font-mono text-xs border" style={{ borderColor: "var(--color-border)" }}>Enter</kbd> Browse file</span>
+            <span><kbd className="px-1.5 py-0.5 rounded font-mono text-xs border" style={{ borderColor: "var(--color-border)" }}>Enter</kbd> Browse files</span>
           </div>
         )}
 
         {/* Hidden file input (browse) */}
-        <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={onChange} aria-hidden="true" />
+        <input ref={inputRef} type="file" accept={accept} multiple={multiple} className="hidden" onChange={onChange} aria-hidden="true" />
 
         {/* Hidden camera input (mobile) */}
         <input

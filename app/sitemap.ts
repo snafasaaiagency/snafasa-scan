@@ -1,8 +1,8 @@
 import { MetadataRoute } from "next";
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://snafasascan.com";
+import { getBaseUrl } from "@/lib/config";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const BASE_URL = getBaseUrl();
   const routes = [
     "",
     "/convert",
